@@ -8,8 +8,24 @@
     <artifactId>sdk-sk4</artifactId>
     <version>1.2</version>
 
+    <developers>
+        <developer>
+            <name>smitea</name>
+            <url>https://smitea.github.io/</url>
+            <email>smitea@163.com</email>
+            <organization>ridko</organization>
+            <organizationUrl>http://www.ridkorfid.com/</organizationUrl>
+        </developer>
+    </developers>
+
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <netty.version>4.1.13.Final</netty.version>
+
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+        <maven.compiler.compilerVersion>1.7</maven.compiler.compilerVersion>
     </properties>
 
     <dependencies>
@@ -30,4 +46,20 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.1</version>
+                <configuration>
+                    <aggregate>true</aggregate>
+                    <stylesheetfile>${project.basedir}/main.css</stylesheetfile>
+                    <reportOutputDirectory>${project.basedir}</reportOutputDirectory>
+                    <destDir>doc</destDir>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

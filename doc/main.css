@@ -1,0 +1,151 @@
+/* Javadoc style sheet */
+
+/* Define colors, fonts and other style attributes here to override the defaults */
+
+/* Page background color */
+
+body {
+    background-color: #FFFFFF
+}
+
+/* Headings */
+
+h1 {
+    font-size: 145%
+}
+
+h2 {
+    font-family: Courier New
+}
+
+h3 {
+    font-family: Courier New
+}
+
+/* Table colors */
+
+.TableHeadingColor {
+    background: #DDDDDD;
+    color: black;
+    font-family: Courier New
+}
+
+/* Dark mauve */
+
+.TableSubHeadingColor {
+    background: #DDDDDD;
+    font-family: Courier New
+}
+
+/* Light mauve */
+
+.TableRowColor {
+    background: #FFFFFF;
+    font-family: Courier New
+}
+
+/* White */
+
+/* Font used in left-hand frame lists */
+
+.FrameTitleFont {
+    font-size: 100%;
+    font-family: Courier New
+}
+
+.FrameHeadingFont {
+    font-size: 90%;
+    font-family: Courier New
+}
+
+.FrameItemFont {
+    font-size: 90%;
+    font-family: Courier New
+}
+
+/* Navigation bar fonts and colors */
+
+.NavBarCell1 {
+    font-family: Courier New;
+    background-color: #DDDDDD;
+    font-size: 12px
+}
+
+/* Light mauve */
+
+.NavBarCell1Rev {
+    font-family: Courier New;
+    background-color: #DDDDDD;
+    font-size: 12px
+}
+
+/* Dark Blue */
+
+.NavBarFont1 {
+    font-family: Courier New;
+    color: #000000;
+    font-size: 12px
+}
+
+.NavBarFont1Rev {
+    font-family: Courier New;
+    color: #FFFFFF;
+    font-size: 12px
+}
+
+.NavBarCell2 {
+    font-family: Courier New;
+    background-color: #FFFFFF;
+    font-size: 12px
+}
+
+.NavBarCell3 {
+    font-family: Courier New;
+    background-color: #FFFFFF;
+    font-size: 12px
+}
+
+td {
+    font-size: 12px;
+    font-family: Courier New;
+}
+
+dl {
+    font-size: 12px;
+    font-family: Courier New;
+}
+
+p {
+    font-size: 12px;
+    font-family: Courier New;
+}
+
+pre {
+    font-family: Courier New;
+}
+
+code {
+    color: #555555;
+    font-family: Courier New;
+}
+
+li {
+    font-size: 12px;
+    font-family: Courier New;
+}
+
+a {
+    color: #555555;
+    font-size: 12px;
+    font-family: Courier New;
+}
+
+BLOCKQUOTE {
+    font-size: 12px;
+    font-family: Courier New;
+}
+
+body {
+    font-size: 12px;
+    font-family: Courier New;
+}

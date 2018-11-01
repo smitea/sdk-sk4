@@ -3,7 +3,7 @@
 深科RFID读写器SDK适用于所有深科物联科技有限公司所生产的读写器,有关产品信息请访问 [深科物联-RFID产品中心](http://www.soonke.com/welcome)
 > 此文档只涉及深科RFID读写器SDK的接口调用规范以及接口说明，如需了解更多内容，请自行联系厂商。
 
-[Java API doc](http://htmlpreview.github.io/?https://github.com/sMitea/sdk-sk4/doc/index.html)
+[Java API doc](http://htmlpreview.github.io/?doc/index.html)
 
 ## 快速开始
 

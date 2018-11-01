@@ -1,5 +1,6 @@
 package com.ridko.sk4.protocol;
 
+import com.ridko.sk4.common.PropertyTools;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
@@ -12,6 +13,8 @@ import io.netty.handler.codec.MessageToByteEncoder;
  * @see SK4Protocol
  */
 public class SK4Encoder extends MessageToByteEncoder<SK4Protocol> {
+
+    private boolean isDebug =  PropertyTools.getProperty("sk4.debug", false);
 
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext, SK4Protocol sk4Protocol, ByteBuf out) throws Exception {
@@ -32,6 +35,8 @@ public class SK4Encoder extends MessageToByteEncoder<SK4Protocol> {
         // 写入结束位2
         out.writeByte(sk4Protocol.getEnd2());
 
-        System.out.println("send: "+ByteBufUtil.hexDump(out).toUpperCase());
+        if(isDebug) {
+            System.out.println("send: " + ByteBufUtil.hexDump(out).toUpperCase());
+        }
     }
 }

@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class SK4ClientTest {
-  public SK4Client sk4Client;
-  public AbstractConnection<SerialParam> futureConnection;
+  private SK4Client sk4Client;
+  private AbstractConnection<SerialParam> futureConnection;
 
   @Before
   public void connected() throws Exception {
@@ -55,11 +55,27 @@ public class SK4ClientTest {
         System.out.println(errorEvent.getMsg());
       }
     });
+    futureConnection.setChannelValueIListenter(new IListenter<ChannelValue>() {
+      public void notify(ChannelValue event) {
+        switch (event){
+          case IN:
+            System.out.println("检测到通道门的操作是进");
+            break;
+          case OUT:
+            System.out.println("检测到通道门的操作是出");
+            break;
+          case ERROR:
+            System.out.println("示通道门进出的状态有误");
+            break;
+        }
+      }
+    });
     futureConnection.connect(serialParam).await();
   }
 
   @After
   public void disconnected() throws Exception {
+    Thread.sleep(10000);
     futureConnection.disconnect().await();
   }
 
@@ -155,6 +171,16 @@ public class SK4ClientTest {
         value.fillInStackTrace();
       }
     });
+  }
+
+  @Test
+  public void getInputGpio() throws Exception {
+    Gpios result = sk4Client.getInputGpio(3).await(2, TimeUnit.SECONDS);
+    System.out.println("GPIOs:");
+    for (Gpios.Gpio gpio : result.gpios()) {
+      System.out.print(String.format("%d : %s |\t", gpio.getIndex(), gpio.isHight()));
+    }
+    System.out.println();
   }
 
   @Test
@@ -316,8 +342,6 @@ public class SK4ClientTest {
   @Test
   public void writeTagData() throws Exception {
     byte[] data = HexTools.hexStr2Byte("0011223344556677");
-    // BB1A141122334400000001000200040011223344556677BB0D0A
-    // BB1A141122334400000001000200040011223344556677BB0D0A
     TagData tagData = sk4Client.writeTagData("11223344", FMB.EPC, null, BankNo.EPC, 0x02, 0x04, data).await(3, TimeUnit.SECONDS);
     System.out.println(String.format("ANT:%d DATA:%s", tagData.getAnt(), HexTools.byteArrayToHexString(tagData.getData())));
   }
@@ -359,16 +383,204 @@ public class SK4ClientTest {
   public void setAntWorkAndWaitTime() throws Exception {
     // BB1F0A00640096013A001E2710B30D0A
     // BB1F0A00640096013A001E2710B30D0A
-//    Boolean result =  sk4Client.setAntWorkAndWaitTime(100,150,314,30,10000).await(1,TimeUnit.SECONDS);
-//    System.out.println(String.format("设置%s", result ? "成功" : "失败"));
-    AntWorkAndWaitTime antWorkAndWaitTime = sk4Client.getAntWorkAndWaitTime().await(1,TimeUnit.SECONDS);
+    Boolean result = sk4Client.setAntWorkAndWaitTime(100, 150, 314, 30, 10000).await(1, TimeUnit.SECONDS);
+    System.out.println(String.format("设置%s", result ? "成功" : "失败"));
+    AntWorkAndWaitTime antWorkAndWaitTime = sk4Client.getAntWorkAndWaitTime().await(1, TimeUnit.SECONDS);
     System.out.println(String.format("Ant1WorkTime:%d Ant2WorkTime:%d Ant3WorkTime:%d Ant4WorkTime:%d WaitTime:%d",
             antWorkAndWaitTime.getAnt1WorkTime(),
             antWorkAndWaitTime.getAnt2WorkTime(),
             antWorkAndWaitTime.getAnt3WorkTime(),
             antWorkAndWaitTime.getAnt4WorkTime(),
             antWorkAndWaitTime.getWaitTime()));
+  }
 
+  @Test
+  public void setFastID() throws Exception {
+    Boolean result = sk4Client.setFastID(true).await(1, TimeUnit.SECONDS);
+    System.out.println(String.format("设置%s", result ? "成功" : "失败"));
+    Boolean value = sk4Client.getFastID().await(1, TimeUnit.SECONDS);
+    System.out.println(String.format("当前 FastID 功能为%s状态", value ? "开启" : "关闭"));
+  }
 
+  @Test
+  public void setBaudRate() throws Exception {
+    Boolean result = sk4Client.setBaudRate(BaudRate.B_115200).await(1, TimeUnit.SECONDS);
+    System.out.println(String.format("设置%s", result ? "成功" : "失败"));
+  }
+
+  @Test
+  public void setAutoReadWhenPowerOff() throws Exception {
+    Boolean await = sk4Client.setAutoReadWhenPowerOff(false).await();
+    System.out.println(String.format("开机自动读取标志为: %s", await ? "auto" : "non"));
+  }
+
+  @Test
+  public void setQtParam() throws Exception {
+    Boolean result = sk4Client.setQtParam("55555555", FMB.TID, HexTools.hexStr2Byte("112233445566"), true, false).await(2, TimeUnit.SECONDS);
+    System.out.println(String.format("设置%s", result ? "成功" : "失败"));
+    QtParam qtParam = sk4Client.getQtParam("55555555", FMB.TID, HexTools.hexStr2Byte("112233445566")).await();
+    System.out.println(String.format("获取的Qt参数为 \t%s |\t %s", qtParam.isCloseControl() ? "启用近距离控制" : "无近距离控制", qtParam.isEnabledPublicMemoryMap() ? "使用 Public Memory Map" : "启用 Private Memory Map"));
+  }
+
+  @Test
+  public void setQtOperation() throws Exception {
+    // 设置 QT 参数，启用近距离控制，标签使用 Private Memory Map。标签TID=0x112233445566778899001122，通过 TID 前 6 个字节过滤，AP=0x55555555
+    sk4Client.setQtOperation(
+            "55555555",
+            FMB.TID,
+            HexTools.hexStr2Byte("112233445566"),
+            QtOperation.NONE,
+            true,
+            false,
+            false,
+            // 以下参数值只需要在写操作时添加,在读操作时以下参数值无效
+            BankNo.EPC,
+            0x00,
+            0x00,
+            null).await(2, TimeUnit.SECONDS);
+
+    // QT读操作
+    QtOperation operation = sk4Client.setQtOperation(
+            "55555555",
+            FMB.TID,
+            HexTools.hexStr2Byte("112233445566"),
+            QtOperation.NONE,
+            true,
+            false,
+            false,
+            // 以下参数值只需要在写操作时添加,在读操作时以下参数值无效
+            BankNo.EPC,
+            0x00,
+            0x00,
+            null).await(2, TimeUnit.SECONDS);
+    // 获取读操作时返回的数据内容
+    switch (operation) {
+      case READ:
+        byte[] data = operation.getData();
+        System.out.println(String.format("设置Qt操作成功后,读取到的数据内容为:%s", HexTools.byteArrayToHexString(data)));
+        break;
+    }
+
+    // QT写操作
+    byte[] data = HexTools.hexStr2Byte("0011223344556677");
+    sk4Client.setQtOperation("55555555",
+            FMB.TID,
+            HexTools.hexStr2Byte("112233445566"),
+            QtOperation.WRITE,
+            true,
+            false,
+            false,
+            BankNo.EPC,
+            0x02,
+            0x04,
+            data).await(2, TimeUnit.SECONDS);
+  }
+
+  @Test
+  public void setTagFocus() throws Exception {
+    Boolean result = sk4Client.setTagFocus(true).await(1, TimeUnit.SECONDS);
+    assert result;
+    System.out.println(String.format("设置成功!"));
+
+    Boolean value = sk4Client.getTagFocus().await(1, TimeUnit.SECONDS);
+    System.out.println(String.format("当前 TAGFOCUS 功能为 %s状态", value ? "开启" : "关闭"));
+  }
+
+  @Test
+  public void setBeep() throws Exception {
+    Boolean result = sk4Client.setBeep(true).await(1, TimeUnit.SECONDS);
+    assert result;
+    System.out.println("设置成功!");
+  }
+
+  @Test
+  public void setWorkMode() throws Exception {
+    Boolean result = sk4Client.setWorkMode(WorkMode.EAS_MODE).await(1, TimeUnit.SECONDS);
+    assert result;
+    System.out.println("设置成功!");
+
+    WorkMode value = sk4Client.getWorkMode().await(1, TimeUnit.SECONDS);
+    System.out.println("获取工作模式成功,工作模式为" + value);
+  }
+
+  @Test
+  public void setEASParam() throws Exception {
+    Boolean result = sk4Client.setEASParam(1, 0x02).await(2, TimeUnit.SECONDS);
+    assert result;
+    System.out.println("设置成功!");
+    EAS value = sk4Client.getEASParam().await(1, TimeUnit.SECONDS);
+    System.out.println(String.format("EAS 区选择的字节为:%d,EAS的值为:%d", value.getBit(), value.getValue()));
+  }
+
+  @Test
+  public void setHeartbeatParam() throws Exception {
+    Boolean result = sk4Client.setHeartbeatParam(6).await(2, TimeUnit.SECONDS);
+    assert result;
+    System.out.println("设置成功!");
+    Integer value = sk4Client.getHeartbeatParam().await(2, TimeUnit.SECONDS);
+    System.out.println(String.format("心跳包参数为:%d * 30s", value));
+  }
+
+  @Test
+  public void restWifi() throws Exception {
+    Boolean result = sk4Client.restWifi().await(2, TimeUnit.SECONDS);
+    assert result;
+    System.out.println("重置成功!");
+  }
+
+  @Test
+  public void setBranchWorkIntervalTime() throws Exception {
+    Boolean result = sk4Client.setBranchWorkIntervalTime(1).await(2, TimeUnit.SECONDS);
+    assert result;
+    System.out.println("设置成功!");
+  }
+
+  @Test
+  public void setBranchAnts() throws Exception {
+    Boolean result = sk4Client.setBranchAnts(1, 2).await(2, TimeUnit.SECONDS);
+    assert result;
+    System.out.println("设置成功!");
+  }
+
+  @Test
+  public void setRelayWorkTime() throws Exception {
+    Boolean result = sk4Client.setRelayWorkTime(1, 2).await(2, TimeUnit.SECONDS);
+    assert result;
+    System.out.println("设置成功!");
+  }
+
+  @Test
+  public void setReaderTriggerWorkTime() throws Exception {
+    Boolean result = sk4Client.setReaderTriggerWorkTime(2).await(2, TimeUnit.SECONDS);
+    assert result;
+    System.out.println("设置成功!");
+  }
+
+  @Test
+  public void setReaderAlarmIntervalTime() throws Exception {
+    Boolean result = sk4Client.setReaderAlarmIntervalTime(3).await(2, TimeUnit.SECONDS);
+    assert result;
+    System.out.println("设置成功!");
+  }
+
+  @Test
+  public void restart() throws Exception {
+    Boolean result = sk4Client.restart().await(2, TimeUnit.SECONDS);
+    assert result;
+    System.out.println("设备已重启!");
+  }
+
+  @Test
+  public void setBranchWorkPowers() throws Exception {
+    Boolean result = sk4Client.setBranchWorkPowers(new BranchAntPowerParam(1, 0x10), new BranchAntPowerParam(2, 0x11)).await(2, TimeUnit.SECONDS);
+    assert result;
+    System.out.println("设置成功!");
+
+    List<BranchAntPowerParam> params = sk4Client.getBranchWorkPowers().await(2, TimeUnit.SECONDS);
+    System.out.println();
+    for (BranchAntPowerParam powerParam : params) {
+      System.out.println(String.format("Ant:%d Power:%d",powerParam.getIndex(),powerParam.getPower()));
+    }
+    System.out.println();
   }
 }

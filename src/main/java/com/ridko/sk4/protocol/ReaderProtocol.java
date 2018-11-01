@@ -14,11 +14,11 @@ public class SK4Protocol {
   /**
    * 指令类型
    */
-  private int type;
+  private int type = 0x00;
   /**
    * 数据位长度
    */
-  private int len;
+  private int len = 0x00;
   /**
    * 数据位内容
    */
@@ -26,7 +26,7 @@ public class SK4Protocol {
   /**
    * CRC校验位
    */
-  private int crc;
+  private int crc = 0x00;
   /**
    * 结束标志位1
    */
@@ -87,5 +87,12 @@ public class SK4Protocol {
     this.type = type;
     this.len = len;
     this.data = data;
+  }
+
+  public SK4Protocol(int type, int len, byte[] data, int crc) {
+    this.type = type;
+    this.len = len;
+    this.data = data;
+    this.crc = crc;
   }
 }

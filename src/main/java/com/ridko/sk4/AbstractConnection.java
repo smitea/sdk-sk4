@@ -1,6 +1,7 @@
 package com.ridko.sk4;
 
 import com.ridko.sk4.common.HexTools;
+import com.ridko.sk4.entity.ChannelValue;
 import com.ridko.sk4.entity.Tag;
 import com.ridko.sk4.error.UnconnectedException;
 import com.ridko.sk4.handler.ProtocolHandler;
@@ -12,7 +13,7 @@ import com.ridko.sk4.promise.Callback;
 import com.ridko.sk4.promise.Future;
 import com.ridko.sk4.promise.Promise;
 import com.ridko.sk4.protocol.Protocol;
-import com.ridko.sk4.protocol.SK4Protocol;
+import com.ridko.sk4.protocol.ReaderProtocol;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 
@@ -26,9 +27,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author smitea
  * @since 2018-10-30
  */
-public abstract class AbstractConnection<Option extends SocketAddress> implements FutureConnection<Option>, Transfer {
+abstract class AbstractConnectionI<Option extends SocketAddress> implements IReaderConnection<Option> {
   /** 连接事件监听 */
   private IListenter<ConnectEvent> connectEventIListenter;
+  /** 防盗门进出监听 */
+  private IListenter<ChannelValue> channelValueIListenter;
   /** 错误信息监听 */
   private IListenter<ErrorEvent> errorEventIListenter;
   /** 询读监听 */
@@ -49,7 +52,7 @@ public abstract class AbstractConnection<Option extends SocketAddress> implement
   /** 指令回调处理集合 */
   private Map<Integer, Protocol> protocolHandlerMap;
 
-  public AbstractConnection() {
+  public AbstractConnectionI() {
     bootstrap = new Bootstrap();
     eventLoopGroup = eventLoopGroup();
     protocolHandlerMap = new ConcurrentHashMap<Integer, Protocol>();
@@ -70,15 +73,22 @@ public abstract class AbstractConnection<Option extends SocketAddress> implement
 
   /** 设置连接状态监听器 */
   public void setConnectEventIListenter(IListenter<ConnectEvent> connectEventIListenter) {
-    synchronized (AbstractConnection.class) {
+    synchronized (AbstractConnectionI.class) {
       this.connectEventIListenter = connectEventIListenter;
     }
   }
 
   /** 设置标签巡查监听器 */
   public void setTagListenter(ITagListenter tagListenter) {
-    synchronized (AbstractConnection.class) {
+    synchronized (AbstractConnectionI.class) {
       this.tagListenter = tagListenter;
+    }
+  }
+
+  /** 设置防盗门进出监听器 */
+  public void setChannelValueIListenter(IListenter<ChannelValue> channelValueIListenter) {
+    synchronized (AbstractConnectionI.class) {
+      this.channelValueIListenter = channelValueIListenter;
     }
   }
 
@@ -117,13 +127,13 @@ public abstract class AbstractConnection<Option extends SocketAddress> implement
             // 获取写通道
             writeChannel = channelFuture.channel();
             // 获取读通道
-            SK4ClientHandler sk4ClientHandler = writeChannel.pipeline().get(SK4ClientHandler.class);
+            ReaderClientHandler readerClientHandler = writeChannel.pipeline().get(ReaderClientHandler.class);
             // 通知已连接消息
             notifyConnectEvent(ConnectEvent.CONNECTED);
 
             // 添加错误信息处理
             protocolHandlerMap.put(0xFF, new Protocol() {
-              public void readProtocol(SK4Protocol protocol) {
+              public void readProtocol(ReaderProtocol protocol) {
                 byte[] data = protocol.getData();
                 int _msb = data[0] << 8;
                 int _lsb = data[1];
@@ -133,7 +143,7 @@ public abstract class AbstractConnection<Option extends SocketAddress> implement
                 }
               }
 
-              public SK4Protocol writeProtocol() {
+              public ReaderProtocol writeProtocol() {
                 return null;
               }
 
@@ -142,17 +152,42 @@ public abstract class AbstractConnection<Option extends SocketAddress> implement
               }
             });
 
+            // 心跳包信息处理
+            protocolHandlerMap.put(0xFE, new Protocol() {
+              public void readProtocol(ReaderProtocol protocol) {
+                if (protocol.getLen() == 0x04) {
+                  // 发送心跳包
+                  notifyConnectEvent(ConnectEvent.HEART_BEAT);
+                } else if (protocol.getLen() == 0x01) {
+                  if (channelValueIListenter != null) {
+                    // 发送通道门检测事件
+                    channelValueIListenter.notify(ChannelValue.fromValue(protocol.getData()[0]));
+                  }
+                }
+              }
+
+              @Deprecated
+              public ReaderProtocol writeProtocol() {
+                return null;
+              }
+
+              @Deprecated
+              public int resultType() {
+                return 0;
+              }
+            });
+
             // 设置数据回调处理
-            sk4ClientHandler.setProtocolHandler(new ProtocolHandler() {
-              public void handler(SK4Protocol sk4Protocol) {
+            readerClientHandler.setProtocolHandler(new ProtocolHandler() {
+              public void handler(ReaderProtocol readerProtocol) {
                 // 获取响应指令类型
-                int type = sk4Protocol.getType();
+                int type = readerProtocol.getType();
                 // 获取对应指令类型的解析器
                 Protocol protocol = protocolHandlerMap.get(type);
                 if (protocol != null) {
                   // 解析数据
                   try {
-                    protocol.readProtocol(sk4Protocol);
+                    protocol.readProtocol(readerProtocol);
                   } catch (Exception ignored) {
                   }
                 }
@@ -160,7 +195,7 @@ public abstract class AbstractConnection<Option extends SocketAddress> implement
             });
 
             // 设置连接状态监听
-            sk4ClientHandler.setListenter(connectEventIListenter);
+            readerClientHandler.setListenter(connectEventIListenter);
           } else {
             // 触发失败消息
             promise.onFailure(channelFuture.cause());
@@ -208,14 +243,14 @@ public abstract class AbstractConnection<Option extends SocketAddress> implement
 
   public void start() {
     send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         // 解析EPC数据 并回调
         notifyData(protocol.getData());
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         // 开始询读指令
-        final SK4Protocol protocol = new SK4Protocol();
+        final ReaderProtocol protocol = new ReaderProtocol();
         protocol.setType(0x17);
         protocol.setLen(0x02);
         protocol.setData(new byte[]{0x00, 0x00});
@@ -234,15 +269,15 @@ public abstract class AbstractConnection<Option extends SocketAddress> implement
   public Future<Void> stop() {
     final Promise<Void> promise = new Promise<Void>();
     send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         // 设置已准备就绪状态
         isStarted = false;
         promise.onSuccess(null);
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         // 设置停止询读指令
-        final SK4Protocol protocol = new SK4Protocol();
+        final ReaderProtocol protocol = new ReaderProtocol();
         protocol.setType(0x18);
         protocol.setLen(0x00);
         protocol.setData(null);
@@ -268,11 +303,13 @@ public abstract class AbstractConnection<Option extends SocketAddress> implement
 
     if (writeChannel != null) {
       // 获取发送的指令
-      SK4Protocol sk4Protocol = protocol.writeProtocol();
+      ReaderProtocol readerProtocol = protocol.writeProtocol();
       // 设置CRC校验位
-      HexTools.crc16(sk4Protocol);
+      if (readerProtocol.getCrc() == 0) {
+        HexTools.crc16(readerProtocol);
+      }
       // 发送指令
-      writeChannel.writeAndFlush(sk4Protocol);
+      writeChannel.writeAndFlush(readerProtocol);
       // 设置数据回调处理器
       protocolHandlerMap.put(protocol.resultType(), protocol);
     } else {

@@ -1,7 +1,7 @@
 package com.ridko.sk4;
 
-import com.ridko.sk4.protocol.SK4Decoder;
-import com.ridko.sk4.protocol.SK4Encoder;
+import com.ridko.sk4.protocol.ReaderDecoder;
+import com.ridko.sk4.protocol.ReaderEncoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -14,7 +14,7 @@ import java.net.SocketAddress;
  * @author smitea
  * @since 2018-10-30
  */
-public class TcpConnection extends AbstractConnection<SocketAddress> {
+public class TcpConnectionI extends AbstractConnectionI<SocketAddress> {
   protected EventLoopGroup eventLoopGroup() {
     return new NioEventLoopGroup(2);
   }
@@ -30,9 +30,9 @@ public class TcpConnection extends AbstractConnection<SocketAddress> {
               @Override
               public void initChannel(SocketChannel socketChannel) throws Exception {
                 ChannelPipeline cp = socketChannel.pipeline();
-                cp.addLast(new SK4Encoder());
-                cp.addLast(new SK4Decoder(0xBB, 0x0D, 0x0A));
-                cp.addLast(new SK4ClientHandler());
+                cp.addLast(new ReaderEncoder());
+                cp.addLast(new ReaderDecoder(0xBB, 0x0D, 0x0A));
+                cp.addLast(new ReaderClientHandler());
               }
             });
   }

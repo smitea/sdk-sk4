@@ -1,7 +1,7 @@
 package com.ridko.sk4;
 
-import com.ridko.sk4.protocol.SK4Decoder;
-import com.ridko.sk4.protocol.SK4Encoder;
+import com.ridko.sk4.protocol.ReaderDecoder;
+import com.ridko.sk4.protocol.ReaderEncoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.oio.OioEventLoopGroup;
@@ -14,7 +14,7 @@ import io.netty.channel.rxtx.RxtxChannelConfig;
  * @author smitea
  * @since 2018-10-30
  */
-public class SerialConnection extends AbstractConnection<SerialParam> {
+public class SerialConnectionI extends AbstractConnectionI<SerialParam> {
 
   protected EventLoopGroup eventLoopGroup() {
     return new OioEventLoopGroup(2);
@@ -35,9 +35,9 @@ public class SerialConnection extends AbstractConnection<SerialParam> {
                 rxtxChannelConfig.setParitybit(RxtxChannelConfig.Paritybit.valueOf(serialParam.getParity()));
 
                 ChannelPipeline cp = channel.pipeline();
-                cp.addLast(new SK4Encoder());
-                cp.addLast(new SK4Decoder(0xBB, 0x0D, 0x0A));
-                cp.addLast(new SK4ClientHandler());
+                cp.addLast(new ReaderEncoder());
+                cp.addLast(new ReaderDecoder(0xBB, 0x0D, 0x0A));
+                cp.addLast(new ReaderClientHandler());
               }
             });
   }

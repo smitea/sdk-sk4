@@ -59,7 +59,6 @@ public class SK4Client implements ICommand {
         return 0x80;
       }
     });
-
     return promise;
   }
 
@@ -173,6 +172,43 @@ public class SK4Client implements ICommand {
       }
     });
     return gpioPromise;
+  }
+
+  public Promise<Gpios> getInputGpio(final int... index) {
+    final Promise<Gpios> promise = new Promise<Gpios>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          byte _index = data[1];
+          byte _value = data[2];
+
+          Gpios gpios = new Gpios();
+          for (int bit = 0; bit < 8; bit++) {
+            int _bit = (1 << bit);
+            if ((_index & _bit) == _bit) {
+              gpios.add(bit + 1, ((_value & _bit) == _bit));
+            }
+          }
+          promise.onSuccess(gpios);
+        } else {
+          promise.onFailure(new SetException("the set heartbeat param is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        byte data0 = 0;
+        for (int bit = 0; bit < index.length; bit++) {
+          data0 |= (1 << index[bit] - 1);
+        }
+        return new SK4Protocol(0x33, 0x01, new byte[]{data0});
+      }
+
+      public int resultType() {
+        return 0xB3;
+      }
+    });
+    return promise;
   }
 
   public Promise<Boolean> setOutputFrequency(final int... freqs) {
@@ -757,6 +793,215 @@ public class SK4Client implements ICommand {
     return tagDataPromise;
   }
 
+  public Promise<Boolean> setQtParam(final String password, final FMB fmb, final byte[] md, final boolean isCloseControl, final boolean isEnabledPublicMemoryMap) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] _data = protocol.getData();
+        if (_data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set Qt param is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        ByteBuf byteBuf = Unpooled.buffer();
+        byte[] _password = new byte[]{0x00, 0x00, 0x00, 0x00};
+        if (!"".equals(password)) {
+          _password = HexTools.hexStr2Byte(password);
+        }
+
+        // 过滤数据类型
+        int filterType = fmb.getValue();
+
+        // 过滤数据
+        int filterLength = 0;
+        byte[] filterData = new byte[0];
+
+        // 过滤数据
+        if (md != null && md.length != 0) {
+          filterData = md;
+          filterLength = md.length;
+        }
+
+        byte data1 = 0x00;
+        if (isCloseControl) {
+          data1 |= 0x01;
+        }
+        if (isEnabledPublicMemoryMap) {
+          data1 |= 0x02;
+        }
+
+        // 写入标签密码
+        byteBuf.writeBytes(_password);
+        // 写入过滤数据类型
+        byteBuf.writeByte(filterType);
+        // 写入过滤数据长度
+        byteBuf.writeByte(filterLength & 0xFF00);
+        byteBuf.writeByte(filterLength & 0xFF);
+        // 写入过滤数据
+        byteBuf.writeBytes(filterData);
+
+        // Data0 为保留值
+        byteBuf.writeByte(0x00);
+        // 控制位
+        byteBuf.writeByte(data1);
+        byte[] data = ByteBufUtil.getBytes(byteBuf);
+        return new SK4Protocol(0x26, data.length, data);
+      }
+
+      public int resultType() {
+        return 0xA6;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<QtParam> getQtParam(final String password, final FMB fmb, final byte[] md) {
+    final Promise<QtParam> paramPromise = new Promise<QtParam>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          byte data1 = data[1];
+          paramPromise.onSuccess(new QtParam((data1 & 0x01) == 0x01, (data1 & 0x02) == 0x02));
+        } else {
+          paramPromise.onFailure(new GetException("the get Qt param is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        ByteBuf byteBuf = Unpooled.buffer();
+        byte[] _password = new byte[]{0x00, 0x00, 0x00, 0x00};
+        if (!"".equals(password)) {
+          _password = HexTools.hexStr2Byte(password);
+        }
+
+        // 过滤数据类型
+        int filterType = fmb.getValue();
+
+        // 过滤数据
+        int filterLength = 0;
+        byte[] filterData = new byte[0];
+
+        // 过滤数据
+        if (md != null && md.length != 0) {
+          filterData = md;
+          filterLength = md.length;
+        }
+        // 写入标签密码
+        byteBuf.writeBytes(_password);
+        // 写入过滤数据类型
+        byteBuf.writeByte(filterType);
+        // 写入过滤数据长度
+        byteBuf.writeByte(filterLength & 0xFF00);
+        byteBuf.writeByte(filterLength & 0xFF);
+        // 写入过滤数据
+        byteBuf.writeBytes(filterData);
+        byte[] data = ByteBufUtil.getBytes(byteBuf);
+        return new SK4Protocol(0x27, data.length, data);
+      }
+
+      public int resultType() {
+        return 0xA7;
+      }
+    });
+    return paramPromise;
+  }
+
+  public Promise<QtOperation> setQtOperation(final String password, final FMB fmb, final byte[] md, final QtOperation operation, final boolean isCloseControl, final boolean isEnabledPublicMemoryMap, final boolean isSave, final BankNo bankNo, final int sa, final int dl, final byte[] data) {
+    final Promise<QtOperation> qtOperationPromise = new Promise<QtOperation>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] _data = protocol.getData();
+        if (_data[0] == 0x01) {
+
+          QtOperation _operation = QtOperation.fromValue(_data[1]);
+          // 获取读取的数据位
+          if (_operation == QtOperation.READ) {
+            int len = protocol.getLen();
+            byte[] value = new byte[len - 2];
+            int _index = 0;
+            for (int index = 2; index < len; index++) {
+              value[_index] = _data[index];
+            }
+            _operation.setData(value);
+          }
+
+          qtOperationPromise.onSuccess(_operation);
+        } else {
+          qtOperationPromise.onFailure(new SetException("the set QtOperation is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        ByteBuf byteBuf = Unpooled.buffer();
+        byte[] _password = new byte[]{0x00, 0x00, 0x00, 0x00};
+        if (!"".equals(password)) {
+          _password = HexTools.hexStr2Byte(password);
+        }
+
+        // 过滤数据类型
+        int filterType = fmb.getValue();
+
+        // 过滤数据
+        int filterLength = 0;
+        byte[] filterData = new byte[0];
+
+        // 过滤数据
+        if (md != null && md.length != 0) {
+          filterData = md;
+          filterLength = md.length;
+        }
+
+        byte data1 = 0x00;
+        if (isCloseControl) {
+          data1 |= 0x01;
+        }
+        if (isEnabledPublicMemoryMap) {
+          data1 |= 0x02;
+        }
+        if (isSave) {
+          data1 |= 0x04;
+        }
+
+        // 写入标签密码
+        byteBuf.writeBytes(_password);
+        // 写入过滤数据类型
+        byteBuf.writeByte(filterType);
+        // 写入过滤数据长度
+        byteBuf.writeByte(filterLength & 0xFF00);
+        byteBuf.writeByte(filterLength & 0xFF);
+        // 写入过滤数据
+        byteBuf.writeBytes(filterData);
+        // 写入标志位
+        byteBuf.writeByte(operation.getValue());
+        // 控制位
+        byteBuf.writeByte(data1);
+
+        if (operation == QtOperation.WRITE) {
+          // 写入需要查询的数据的 bank 号
+          byteBuf.writeByte(bankNo.getValue());
+          // 写入需查询的数据的起始地址
+          byteBuf.writeByte(sa);
+          // 写入需写入的数据长度
+          byteBuf.writeByte(dl);
+          // 写入的数据
+          byteBuf.writeBytes(data);
+        }
+
+        byte[] data = ByteBufUtil.getBytes(byteBuf);
+        return new SK4Protocol(0x28, data.length, data);
+      }
+
+      public int resultType() {
+        return 0xA8;
+      }
+    });
+    return qtOperationPromise;
+  }
+
   public Promise<Boolean> setCyclicQueryWorkAndResponseTime(final int workTime, final int interruptedTime) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
@@ -852,7 +1097,7 @@ public class SK4Client implements ICommand {
     abstractConnection.send(new Protocol() {
       public void readProtocol(SK4Protocol protocol) {
         byte[] data = protocol.getData();
-        if(data[0] == 0x01) {
+        if (data[0] == 0x01) {
           antWorkAndWaitTimePromise.onSuccess(new AntWorkAndWaitTime(
                   ((data[1] & 0xFF00) << 8) | ((data[2] & 0x00FF)),
                   ((data[3] & 0xFF00) << 8) | ((data[4] & 0x00FF)),
@@ -860,13 +1105,13 @@ public class SK4Client implements ICommand {
                   ((data[7] & 0xFF00) << 8) | ((data[8] & 0x00FF)),
                   ((data[9] & 0xFF00) << 8) | ((data[10] & 0x00FF))
           ));
-        }else{
+        } else {
           antWorkAndWaitTimePromise.onFailure(new GetException("the get AntWorkAndWaitTime is failed"));
         }
       }
 
       public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x20,0x00,null);
+        return new SK4Protocol(0x20, 0x00, null);
       }
 
       public int resultType() {
@@ -875,5 +1120,546 @@ public class SK4Client implements ICommand {
     });
 
     return antWorkAndWaitTimePromise;
+  }
+
+  public Promise<Boolean> setFastID(final boolean isOn) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set fastID failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x21, 0x01, new byte[]{(byte) (isOn ? 0x01 : 0x00)});
+      }
+
+      public int resultType() {
+        return 0xA1;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> getFastID() {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(data[1] == 0x01);
+        } else {
+          promise.onFailure(new GetException("the fastID get failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x22, 0x00, null);
+      }
+
+      public int resultType() {
+        return 0xA2;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> setBaudRate(final BaudRate baudRate) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set baud rate failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x23, 0x01, new byte[]{(byte) baudRate.getValue()});
+      }
+
+      public int resultType() {
+        return 0xA3;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> setAutoReadWhenPowerOff(final boolean isAuto) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        promise.onSuccess(data[0] == 0x01);
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x24, 0x01, new byte[]{(byte) (isAuto ? 0x01 : 0x00)});
+      }
+
+      public int resultType() {
+        return 0xA4;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> setTagFocus(final boolean isEnabled) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set TagFocus is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x29, 0x01, new byte[]{(byte) (isEnabled ? 0x01 : 0x00)});
+      }
+
+      public int resultType() {
+        return 0XA9;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> getTagFocus() {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(data[1] == 0x01);
+        } else {
+          promise.onFailure(new GetException("the get TagFocus is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x2A, 0x00, null);
+      }
+
+      public int resultType() {
+        return 0xAA;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> setBeep(final boolean isEnabled) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set beep is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x2B, 0x01, new byte[]{(byte) (isEnabled ? 0x01 : 0x00)});
+      }
+
+      public int resultType() {
+        return 0xAB;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> setWorkMode(final WorkMode workMode) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set work mode is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x2C, 0x01, new byte[]{(byte) workMode.getValue()});
+      }
+
+      public int resultType() {
+        return 0xAC;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<WorkMode> getWorkMode() {
+    final Promise<WorkMode> promise = new Promise<WorkMode>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(WorkMode.fromValue(data[1]));
+        } else {
+          promise.onFailure(new GetException("the get work mode is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x2D, 0x00, null);
+      }
+
+      public int resultType() {
+        return 0xAD;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> setEASParam(final int bits, final int value) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set EAS param is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x2E, 0x02, new byte[]{(byte) bits, (byte) value});
+      }
+
+      public int resultType() {
+        return 0xAE;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<EAS> getEASParam() {
+    final Promise<EAS> promise = new Promise<EAS>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(new EAS(data[1], data[2]));
+        } else {
+          promise.onFailure(new SetException("the set EAS param is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x2F, 0x00, null);
+      }
+
+      public int resultType() {
+        return 0xAF;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> setHeartbeatParam(final int heartbeat) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set heartbeat param is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0X30, 0x01, new byte[]{(byte) heartbeat});
+      }
+
+      public int resultType() {
+        return 0XB0;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Integer> getHeartbeatParam() {
+    final Promise<Integer> promise = new Promise<Integer>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess((int) data[1]);
+        } else {
+          promise.onFailure(new SetException("the set heartbeat param is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0X31, 0x00, null);
+      }
+
+      public int resultType() {
+        return 0XB1;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> restWifi() {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the rest wifi is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x32, 0x00, null);
+      }
+
+      public int resultType() {
+        return 0XB2;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> setBranchWorkIntervalTime(final int intervalTime) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set branch work interval time is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x34, 0x01, new byte[]{(byte) intervalTime});
+      }
+
+      public int resultType() {
+        return 0XB4;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> setBranchAnts(final int... ants) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set branch ants is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        byte data0 = 0;
+        for (int bit = 0; bit < ants.length; bit++) {
+          data0 |= (1 << ants[bit] - 1);
+        }
+        return new SK4Protocol(0x35, 0x01, new byte[]{data0});
+      }
+
+      public int resultType() {
+        return 0XB5;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> setBranchWorkPowers(final BranchAntPowerParam... params) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set branch work powers is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        byte[] data = new byte[16];
+        for (int bit = 0; bit < data.length; bit++) {
+          int power = BranchAntPowerParam.indexOfPower(bit + 1, params);
+          if (power > -1) {
+            data[bit] = (byte) power;
+          }
+        }
+        return new SK4Protocol(0x40, 0x0C, data);
+      }
+
+      public int resultType() {
+        return 0xB9;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<List<BranchAntPowerParam>> getBranchWorkPowers() {
+    final Promise<List<BranchAntPowerParam>> promise = new Promise<List<BranchAntPowerParam>>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          List<BranchAntPowerParam> powerParams = new ArrayList<BranchAntPowerParam>();
+          for (int bit = 0; bit < 16; bit++) {
+            powerParams.add(new BranchAntPowerParam(bit + 1, data[bit + 1]));
+          }
+          promise.onSuccess(powerParams);
+        } else {
+          promise.onFailure(new SetException("the set branch work powers is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x41, 0x00, null);
+      }
+
+      public int resultType() {
+        return 0xBA;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> setRelayWorkTime(final int relay1, final int relay2) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set relay workTime is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x36, 0x02, new byte[]{(byte) relay1, (byte) relay2});
+      }
+
+      public int resultType() {
+        return 0xB5;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> setReaderTriggerWorkTime(final int time) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set reader trigger workTime is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x37, 0x01, new byte[]{(byte) time});
+      }
+
+      public int resultType() {
+        return 0xB6;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> setReaderAlarmIntervalTime(final int intervalTime) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set reader alarm interval time is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x38, 0x01, new byte[]{(byte) intervalTime});
+      }
+
+      public int resultType() {
+        return 0xB7;
+      }
+    });
+    return promise;
+  }
+
+  public Promise<Boolean> restart() {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the restart is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x39, 0x01, new byte[]{0x00});
+      }
+
+      public int resultType() {
+        return 0xB8;
+      }
+    });
+    return promise;
+  }
+
+  @Deprecated
+  public Promise<String> getSerialNum() {
+    final Promise<String> promise = new Promise<String>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(SK4Protocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(String.format("%d%d%d",data[1],data[2],data[3]));
+        } else {
+          promise.onFailure(new SetException("the get serial number is failed"));
+        }
+      }
+
+      public SK4Protocol writeProtocol() {
+        return new SK4Protocol(0x42,0x00,null);
+      }
+
+      public int resultType() {
+        return 0xBB;
+      }
+    });
+    return promise;
   }
 }

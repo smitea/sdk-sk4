@@ -1,5 +1,6 @@
 package com.ridko.sk4.protocol;
 
+import com.ridko.sk4.common.PropertyTools;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
@@ -14,10 +15,11 @@ import java.util.List;
  * @author smitea
  */
 public class SK4Decoder extends ByteToMessageDecoder {
-
     private volatile int head;
     private volatile int end1;
     private volatile int end2;
+
+    private boolean isDebug =  PropertyTools.getProperty("sk4.debug", false);
 
     /**
      * 初始化解码器
@@ -63,8 +65,9 @@ public class SK4Decoder extends ByteToMessageDecoder {
                 in.setIndex(headIndex, bit);
                 ByteBuf data = in.readBytes(endIndex - headIndex);
 
-                System.out.println("receive:"+ ByteBufUtil.hexDump(data).toUpperCase());
-
+                if(isDebug) {
+                    System.out.println("receive:" + ByteBufUtil.hexDump(data).toUpperCase());
+                }
                 out.add(data);
             }
         }

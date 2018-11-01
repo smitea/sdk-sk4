@@ -6,11 +6,12 @@ import com.ridko.sk4.error.GetException;
 import com.ridko.sk4.error.SetException;
 import com.ridko.sk4.promise.Promise;
 import com.ridko.sk4.protocol.Protocol;
-import com.ridko.sk4.protocol.SK4Protocol;
+import com.ridko.sk4.protocol.ReaderProtocol;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,39 +21,34 @@ import java.util.List;
  * @author smitea
  * @since 2018-10-30
  */
-public class SK4Client implements ICommand {
-  private AbstractConnection abstractConnection = null;
+class ReaderClient implements ICommand {
+  private final AbstractConnection abstractConnection;
 
-  public SerialConnection createSerialConnection() {
-    SerialConnection serialConnection = new SerialConnection();
-    abstractConnection = serialConnection;
-    return serialConnection;
-  }
-
-  public TcpConnection createTcpConnection() {
-    TcpConnection serialConnection = new TcpConnection();
-    abstractConnection = serialConnection;
-    return serialConnection;
+  public ReaderClient(AbstractConnection abstractConnection) {
+    this.abstractConnection = abstractConnection;
   }
 
   public Promise<Boolean> setTxPower(final int readPower, final int writePower, final boolean isLoop) {
     final Promise<Boolean> promise = new Promise<Boolean>();
 
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
-        boolean result = data[0] == 0x01;
-        promise.onSuccess(result);
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set TxPower is failed"));
+        }
       }
 
-      public SK4Protocol writeProtocol() {
-        SK4Protocol sk4Protocol = new SK4Protocol();
+      public ReaderProtocol writeProtocol() {
+        ReaderProtocol readerProtocol = new ReaderProtocol();
         byte data0 = (byte) (isLoop ? 0 : 1);
         byte data1 = (byte) (readPower & 0xFF);
         byte data2 = (byte) (writePower & 0xFF);
         byte[] data = new byte[]{data0, data1, data2};
-        sk4Protocol.setData(data);
-        return sk4Protocol;
+        readerProtocol.setData(data);
+        return readerProtocol;
       }
 
       public int resultType() {
@@ -65,17 +61,17 @@ public class SK4Client implements ICommand {
   public Promise<TxPower> getTxPower() {
     final Promise<TxPower> txPowerPromise = new Promise<TxPower>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         TxPower power = new TxPower(data[0] == 0x00, data[1] & 0xFF, data[2] & 0xFF);
         txPowerPromise.onSuccess(power);
       }
 
-      public SK4Protocol writeProtocol() {
-        SK4Protocol sk4Protocol = new SK4Protocol();
-        sk4Protocol.setType(0x0C);
-        sk4Protocol.setLen(0x00);
-        return sk4Protocol;
+      public ReaderProtocol writeProtocol() {
+        ReaderProtocol readerProtocol = new ReaderProtocol();
+        readerProtocol.setType(0x0C);
+        readerProtocol.setLen(0x00);
+        return readerProtocol;
       }
 
       public int resultType() {
@@ -88,13 +84,16 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setGpio(final Gpios gpios) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
-        boolean result = data[0] == 0x01;
-        promise.onSuccess(result);
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set Gpio is failed"));
+        }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         byte data0 = 0;
         byte data1 = 0;
         List<Gpios.Gpio> _gpios = gpios.gpios();
@@ -107,7 +106,7 @@ public class SK4Client implements ICommand {
             data1 = (byte) (data1 & ~index);
           }
         }
-        return new SK4Protocol(0x01, 0x02, new byte[]{data0, data1});
+        return new ReaderProtocol(0x01, 0x02, new byte[]{data0, data1});
       }
 
       public int resultType() {
@@ -120,7 +119,7 @@ public class SK4Client implements ICommand {
   public Promise<Gpios> getGpio() {
     final Promise<Gpios> gpiosPromise = new Promise<Gpios>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         Gpios gpios = new Gpios();
 
         byte[] data = protocol.getData();
@@ -133,8 +132,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x13, 0x01, new byte[]{(byte) 0xFF});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x13, 0x01, new byte[]{(byte) 0xFF});
       }
 
       public int resultType() {
@@ -147,7 +146,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> getGpio(final int index) {
     final Promise<Boolean> gpioPromise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           byte _index = data[1];
@@ -162,9 +161,9 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         byte _index = (byte) (1 << index - 1);
-        return new SK4Protocol(0x13, 0x01, new byte[]{_index});
+        return new ReaderProtocol(0x13, 0x01, new byte[]{_index});
       }
 
       public int resultType() {
@@ -177,7 +176,7 @@ public class SK4Client implements ICommand {
   public Promise<Gpios> getInputGpio(final int... index) {
     final Promise<Gpios> promise = new Promise<Gpios>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           byte _index = data[1];
@@ -196,12 +195,12 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         byte data0 = 0;
         for (int bit = 0; bit < index.length; bit++) {
           data0 |= (1 << index[bit] - 1);
         }
-        return new SK4Protocol(0x33, 0x01, new byte[]{data0});
+        return new ReaderProtocol(0x33, 0x01, new byte[]{data0});
       }
 
       public int resultType() {
@@ -214,13 +213,16 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setOutputFrequency(final int... freqs) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
-        boolean result = data[0] == 0x01;
-        promise.onSuccess(result);
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set output frequency is failed"));
+        }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         int len = 1;
         byte[] datas = new byte[freqs.length * 3 + 1];
         datas[0] = (byte) freqs.length;
@@ -234,7 +236,7 @@ public class SK4Client implements ICommand {
           datas[len + 2] = (byte) (lsb & 0xFF);
           len += 3;
         }
-        return new SK4Protocol(0x02, (byte) (datas.length), datas);
+        return new ReaderProtocol(0x02, (byte) (datas.length), datas);
       }
 
       public int resultType() {
@@ -247,7 +249,7 @@ public class SK4Client implements ICommand {
   public Promise<List<Integer>> getOutputFrequency() {
     final Promise<List<Integer>> promise = new Promise<List<Integer>>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] datas = protocol.getData();
         List<Integer> frequencies = new ArrayList<Integer>();
         int len = datas[0] & 0xFF;
@@ -262,8 +264,8 @@ public class SK4Client implements ICommand {
         promise.onSuccess(frequencies);
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x0D, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x0D, 0x00, null);
       }
 
       public int resultType() {
@@ -277,17 +279,21 @@ public class SK4Client implements ICommand {
     final Promise<Boolean> promise = new Promise<Boolean>();
 
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
-        promise.onSuccess(data[0] == 0x01);
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set gen2 is failed"));
+        }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         byte data3 = (byte) gen2.getqValue().getValue();
         byte data2 = (byte) (((gen2.getStartQ() << 4) & 0xF0) | (gen2.getMinQ() & 0x0F));
         byte data1 = (byte) ((gen2.getMaxQ() << 4) & 0xF0);
         byte data0 = (byte) ((gen2.getSelect().getValue() << 6) | (gen2.getSession().getValue() << 4) | (gen2.getTarget().getValue() << 3));
-        return new SK4Protocol(0x07, 0x04, new byte[]{data3, data2, data1, data0});
+        return new ReaderProtocol(0x07, 0x04, new byte[]{data3, data2, data1, data0});
       }
 
       public int resultType() {
@@ -301,7 +307,7 @@ public class SK4Client implements ICommand {
   public Promise<Gen2> getGen2() {
     final Promise<Gen2> promise = new Promise<Gen2>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         Gen2 gen2 = new Gen2();
         byte[] data = protocol.getData();
 
@@ -316,8 +322,8 @@ public class SK4Client implements ICommand {
         promise.onSuccess(gen2);
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x14, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x14, 0x00, null);
       }
 
       public int resultType() {
@@ -331,12 +337,16 @@ public class SK4Client implements ICommand {
     final Promise<Boolean> promise = new Promise<Boolean>();
 
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
-        promise.onSuccess(data[0] == 0x01);
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set ants is failed"));
+        }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         List<Ants.Ant> _ants = ants.getAnts();
         byte data0 = 0;
         for (Ants.Ant ant : _ants) {
@@ -344,7 +354,7 @@ public class SK4Client implements ICommand {
             data0 |= (1 << ant.getIndex() - 1);
           }
         }
-        return new SK4Protocol(0x08, 0x01, new byte[]{data0});
+        return new ReaderProtocol(0x08, 0x01, new byte[]{data0});
       }
 
       public int resultType() {
@@ -359,7 +369,7 @@ public class SK4Client implements ICommand {
     final Promise<Ants> antsPromise = new Promise<Ants>();
 
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         Ants ants = new Ants();
         byte data0 = data[0];
@@ -374,8 +384,8 @@ public class SK4Client implements ICommand {
         antsPromise.onSuccess(ants);
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x10, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x10, 0x00, null);
       }
 
       public int resultType() {
@@ -390,13 +400,17 @@ public class SK4Client implements ICommand {
     final Promise<Boolean> promise = new Promise<Boolean>();
 
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
-        promise.onSuccess(data[0] == 0x01);
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set frequency region is failed"));
+        }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x09, 0x02, new byte[]{(byte) (isSave ? 1 : 0), (byte) region.getValue()});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x09, 0x02, new byte[]{(byte) (isSave ? 1 : 0), (byte) region.getValue()});
       }
 
       public int resultType() {
@@ -411,7 +425,7 @@ public class SK4Client implements ICommand {
     final Promise<FrequencyRegion> frequencyRegionPromise = new Promise<FrequencyRegion>();
 
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         byte data0 = data[0];
         byte data1 = data[1];
@@ -419,12 +433,12 @@ public class SK4Client implements ICommand {
         if (data0 == 0x01) {
           frequencyRegionPromise.onSuccess(FrequencyRegion.fromValue(data1));
         } else {
-          frequencyRegionPromise.onFailure(new GetException("the Frequency Region get failed"));
+          frequencyRegionPromise.onFailure(new GetException("the get frequency region failed"));
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x11, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x11, 0x00, null);
       }
 
       public int resultType() {
@@ -439,7 +453,7 @@ public class SK4Client implements ICommand {
     final Promise<Integer> promise = new Promise<Integer>();
 
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         byte data0 = data[0];
         if (data0 == 0x01) {
@@ -453,12 +467,12 @@ public class SK4Client implements ICommand {
           }
           promise.onSuccess(_value);
         } else {
-          promise.onFailure(new GetException("the Temperature get failed"));
+          promise.onFailure(new GetException("the get temperature failed"));
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x12, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x12, 0x00, null);
       }
 
       public int resultType() {
@@ -472,13 +486,13 @@ public class SK4Client implements ICommand {
   public Promise<String> getHardwareVersion() {
     final Promise<String> promise = new Promise<String>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         promise.onSuccess(String.format("V%d.%d.%d", data[0], data[1], data[2]));
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x0A, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x0A, 0x00, null);
       }
 
       public int resultType() {
@@ -491,13 +505,13 @@ public class SK4Client implements ICommand {
   public Promise<String> getFirmwareVersion() {
     final Promise<String> promise = new Promise<String>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         promise.onSuccess(String.format("V%d.%d.%d", data[0], data[1], data[2]));
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x0B, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x0B, 0x00, null);
       }
 
       public int resultType() {
@@ -510,7 +524,7 @@ public class SK4Client implements ICommand {
   public Promise<Tag> singleRead() {
     final Promise<Tag> tagPromise = new Promise<Tag>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         // 天线号
         int ant = data[data.length - 1];
@@ -532,8 +546,8 @@ public class SK4Client implements ICommand {
         tagPromise.onSuccess(tag);
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x16, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x16, 0x00, null);
       }
 
       public int resultType() {
@@ -546,7 +560,7 @@ public class SK4Client implements ICommand {
   public Promise<TagData> readTagData(final String password, final FMB fmb, final byte[] md, final BankNo mb, final int sa, final int dl) {
     final Promise<TagData> tagDataPromise = new Promise<TagData>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           int len = 0x08;
@@ -558,14 +572,13 @@ public class SK4Client implements ICommand {
             _data[bit] = data[_bit];
             bit++;
           }
-
           tagDataPromise.onSuccess(new TagData(_data, ant));
         } else {
           tagDataPromise.onFailure(new GetException("the read tag data is failed"));
         }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         ByteBuf byteBuf = Unpooled.buffer();
 
         byte[] _password = new byte[]{0x00, 0x00, 0x00, 0x00};
@@ -605,7 +618,7 @@ public class SK4Client implements ICommand {
         byteBuf.writeByte(dl & 0xFF);
 
         byte[] data = ByteBufUtil.getBytes(byteBuf);
-        return new SK4Protocol(0x19, data.length, data);
+        return new ReaderProtocol(0x19, data.length, data);
       }
 
       public int resultType() {
@@ -619,7 +632,7 @@ public class SK4Client implements ICommand {
     final Promise<TagData> promise = new Promise<TagData>();
 
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] _data = protocol.getData();
         if (_data[0] == 0x01) {
           promise.onSuccess(new TagData(data, _data[1]));
@@ -628,7 +641,7 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         ByteBuf byteBuf = Unpooled.buffer();
 
         byte[] _password = new byte[]{0x00, 0x00, 0x00, 0x00};
@@ -671,7 +684,7 @@ public class SK4Client implements ICommand {
         byteBuf.writeBytes(data);
 
         byte[] data = ByteBufUtil.getBytes(byteBuf);
-        return new SK4Protocol(0x1A, data.length, data);
+        return new ReaderProtocol(0x1A, data.length, data);
       }
 
       public int resultType() {
@@ -686,7 +699,7 @@ public class SK4Client implements ICommand {
     final Promise<TagData> promise = new Promise<TagData>();
 
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] _data = protocol.getData();
         if (_data[0] == 0x01) {
           promise.onSuccess(new TagData(md, _data[1]));
@@ -695,7 +708,7 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         ByteBuf byteBuf = Unpooled.buffer();
 
         byte[] _password = new byte[]{0x00, 0x00, 0x00, 0x00};
@@ -729,7 +742,7 @@ public class SK4Client implements ICommand {
         byteBuf.writeBytes(param.getCommand());
 
         byte[] data = ByteBufUtil.getBytes(byteBuf);
-        return new SK4Protocol(0x1B, data.length, data);
+        return new ReaderProtocol(0x1B, data.length, data);
       }
 
       public int resultType() {
@@ -743,7 +756,7 @@ public class SK4Client implements ICommand {
   public Promise<TagData> killTag(final String password, final FMB fmb, final byte[] md) {
     final Promise<TagData> tagDataPromise = new Promise<TagData>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] _data = protocol.getData();
         if (_data[0] == 0x01) {
           tagDataPromise.onSuccess(new TagData(md, _data[1]));
@@ -752,7 +765,7 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         ByteBuf byteBuf = Unpooled.buffer();
         byte[] _password = new byte[]{0x00, 0x00, 0x00, 0x00};
         if (!"".equals(password)) {
@@ -783,7 +796,7 @@ public class SK4Client implements ICommand {
         byteBuf.writeBytes(filterData);
 
         byte[] data = ByteBufUtil.getBytes(byteBuf);
-        return new SK4Protocol(0x1C, data.length, data);
+        return new ReaderProtocol(0x1C, data.length, data);
       }
 
       public int resultType() {
@@ -796,7 +809,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setQtParam(final String password, final FMB fmb, final byte[] md, final boolean isCloseControl, final boolean isEnabledPublicMemoryMap) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] _data = protocol.getData();
         if (_data[0] == 0x01) {
           promise.onSuccess(true);
@@ -805,7 +818,7 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         ByteBuf byteBuf = Unpooled.buffer();
         byte[] _password = new byte[]{0x00, 0x00, 0x00, 0x00};
         if (!"".equals(password)) {
@@ -848,7 +861,7 @@ public class SK4Client implements ICommand {
         // 控制位
         byteBuf.writeByte(data1);
         byte[] data = ByteBufUtil.getBytes(byteBuf);
-        return new SK4Protocol(0x26, data.length, data);
+        return new ReaderProtocol(0x26, data.length, data);
       }
 
       public int resultType() {
@@ -861,7 +874,7 @@ public class SK4Client implements ICommand {
   public Promise<QtParam> getQtParam(final String password, final FMB fmb, final byte[] md) {
     final Promise<QtParam> paramPromise = new Promise<QtParam>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           byte data1 = data[1];
@@ -871,7 +884,7 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         ByteBuf byteBuf = Unpooled.buffer();
         byte[] _password = new byte[]{0x00, 0x00, 0x00, 0x00};
         if (!"".equals(password)) {
@@ -900,7 +913,7 @@ public class SK4Client implements ICommand {
         // 写入过滤数据
         byteBuf.writeBytes(filterData);
         byte[] data = ByteBufUtil.getBytes(byteBuf);
-        return new SK4Protocol(0x27, data.length, data);
+        return new ReaderProtocol(0x27, data.length, data);
       }
 
       public int resultType() {
@@ -913,10 +926,9 @@ public class SK4Client implements ICommand {
   public Promise<QtOperation> setQtOperation(final String password, final FMB fmb, final byte[] md, final QtOperation operation, final boolean isCloseControl, final boolean isEnabledPublicMemoryMap, final boolean isSave, final BankNo bankNo, final int sa, final int dl, final byte[] data) {
     final Promise<QtOperation> qtOperationPromise = new Promise<QtOperation>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] _data = protocol.getData();
         if (_data[0] == 0x01) {
-
           QtOperation _operation = QtOperation.fromValue(_data[1]);
           // 获取读取的数据位
           if (_operation == QtOperation.READ) {
@@ -928,14 +940,13 @@ public class SK4Client implements ICommand {
             }
             _operation.setData(value);
           }
-
           qtOperationPromise.onSuccess(_operation);
         } else {
           qtOperationPromise.onFailure(new SetException("the set QtOperation is failed"));
         }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         ByteBuf byteBuf = Unpooled.buffer();
         byte[] _password = new byte[]{0x00, 0x00, 0x00, 0x00};
         if (!"".equals(password)) {
@@ -992,7 +1003,7 @@ public class SK4Client implements ICommand {
         }
 
         byte[] data = ByteBufUtil.getBytes(byteBuf);
-        return new SK4Protocol(0x28, data.length, data);
+        return new ReaderProtocol(0x28, data.length, data);
       }
 
       public int resultType() {
@@ -1005,17 +1016,21 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setCyclicQueryWorkAndResponseTime(final int workTime, final int interruptedTime) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
-        promise.onSuccess(data[0] == 0x01);
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set cyclic query work and response time is failed"));
+        }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         byte data0 = (byte) (workTime & 0xFF00);
         byte data1 = (byte) (workTime & 0xFF);
         byte data2 = (byte) (interruptedTime & 0xFF00);
         byte data3 = (byte) (interruptedTime & 0xFF);
-        return new SK4Protocol(0x1D, 0x04, new byte[]{data0, data1, data2, data3});
+        return new ReaderProtocol(0x1D, 0x04, new byte[]{data0, data1, data2, data3});
       }
 
       public int resultType() {
@@ -1028,7 +1043,7 @@ public class SK4Client implements ICommand {
   public Promise<CyclicQueryWorkAndResponseTime> getCyclicQueryWorkAndResponseTime() {
     final Promise<CyclicQueryWorkAndResponseTime> promise = new Promise<CyclicQueryWorkAndResponseTime>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           byte data0 = data[1];
@@ -1040,12 +1055,12 @@ public class SK4Client implements ICommand {
           int interruptedTime = ((data2 & 0xFFFF) << 8) | (data3 & 0xFFFF);
           promise.onSuccess(new CyclicQueryWorkAndResponseTime(workTime, interruptedTime));
         } else {
-          promise.onFailure(new GetException("the getCyclicQueryWorkAndResponseTime is failed"));
+          promise.onFailure(new GetException("the get cyclicQueryWorkAndResponseTime is failed"));
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x1E, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x1E, 0x00, null);
       }
 
       public int resultType() {
@@ -1059,12 +1074,12 @@ public class SK4Client implements ICommand {
     final Promise<Boolean> promise = new Promise<Boolean>();
 
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         promise.onSuccess(data[0] == 0x01);
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         byte data0 = (byte) ((ant1WorkTime & 0xFF00) >> 8);
         byte data1 = (byte) (ant1WorkTime & 0x00FF);
 
@@ -1080,7 +1095,7 @@ public class SK4Client implements ICommand {
         byte data8 = (byte) ((waitTime & 0xFF00) >> 8);
         byte data9 = (byte) (waitTime & 0x00FF);
 
-        return new SK4Protocol(0x1F, 0x0A, new byte[]{data0, data1, data2, data3, data4, data5, data6, data7, data8, data9});
+        return new ReaderProtocol(0x1F, 0x0A, new byte[]{data0, data1, data2, data3, data4, data5, data6, data7, data8, data9});
       }
 
       public int resultType() {
@@ -1095,7 +1110,7 @@ public class SK4Client implements ICommand {
     final Promise<AntWorkAndWaitTime> antWorkAndWaitTimePromise = new Promise<AntWorkAndWaitTime>();
 
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           antWorkAndWaitTimePromise.onSuccess(new AntWorkAndWaitTime(
@@ -1110,8 +1125,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x20, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x20, 0x00, null);
       }
 
       public int resultType() {
@@ -1125,7 +1140,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setFastID(final boolean isOn) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
@@ -1134,8 +1149,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x21, 0x01, new byte[]{(byte) (isOn ? 0x01 : 0x00)});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x21, 0x01, new byte[]{(byte) (isOn ? 0x01 : 0x00)});
       }
 
       public int resultType() {
@@ -1148,7 +1163,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> getFastID() {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(data[1] == 0x01);
@@ -1157,8 +1172,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x22, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x22, 0x00, null);
       }
 
       public int resultType() {
@@ -1171,7 +1186,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setBaudRate(final BaudRate baudRate) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
@@ -1180,8 +1195,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x23, 0x01, new byte[]{(byte) baudRate.getValue()});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x23, 0x01, new byte[]{(byte) baudRate.getValue()});
       }
 
       public int resultType() {
@@ -1194,13 +1209,17 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setAutoReadWhenPowerOff(final boolean isAuto) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
-        promise.onSuccess(data[0] == 0x01);
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set auto read when power off is failed"));
+        }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x24, 0x01, new byte[]{(byte) (isAuto ? 0x01 : 0x00)});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x24, 0x01, new byte[]{(byte) (isAuto ? 0x01 : 0x00)});
       }
 
       public int resultType() {
@@ -1213,17 +1232,17 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setTagFocus(final boolean isEnabled) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
         } else {
-          promise.onFailure(new SetException("the set TagFocus is failed"));
+          promise.onFailure(new SetException("the set tagFocus is failed"));
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x29, 0x01, new byte[]{(byte) (isEnabled ? 0x01 : 0x00)});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x29, 0x01, new byte[]{(byte) (isEnabled ? 0x01 : 0x00)});
       }
 
       public int resultType() {
@@ -1236,7 +1255,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> getTagFocus() {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(data[1] == 0x01);
@@ -1245,8 +1264,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x2A, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x2A, 0x00, null);
       }
 
       public int resultType() {
@@ -1259,7 +1278,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setBeep(final boolean isEnabled) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
@@ -1268,8 +1287,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x2B, 0x01, new byte[]{(byte) (isEnabled ? 0x01 : 0x00)});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x2B, 0x01, new byte[]{(byte) (isEnabled ? 0x01 : 0x00)});
       }
 
       public int resultType() {
@@ -1282,7 +1301,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setWorkMode(final WorkMode workMode) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
@@ -1291,8 +1310,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x2C, 0x01, new byte[]{(byte) workMode.getValue()});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x2C, 0x01, new byte[]{(byte) workMode.getValue()});
       }
 
       public int resultType() {
@@ -1305,7 +1324,7 @@ public class SK4Client implements ICommand {
   public Promise<WorkMode> getWorkMode() {
     final Promise<WorkMode> promise = new Promise<WorkMode>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(WorkMode.fromValue(data[1]));
@@ -1314,8 +1333,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x2D, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x2D, 0x00, null);
       }
 
       public int resultType() {
@@ -1328,7 +1347,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setEASParam(final int bits, final int value) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
@@ -1337,8 +1356,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x2E, 0x02, new byte[]{(byte) bits, (byte) value});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x2E, 0x02, new byte[]{(byte) bits, (byte) value});
       }
 
       public int resultType() {
@@ -1351,7 +1370,7 @@ public class SK4Client implements ICommand {
   public Promise<EAS> getEASParam() {
     final Promise<EAS> promise = new Promise<EAS>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(new EAS(data[1], data[2]));
@@ -1360,8 +1379,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x2F, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x2F, 0x00, null);
       }
 
       public int resultType() {
@@ -1374,7 +1393,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setHeartbeatParam(final int heartbeat) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
@@ -1383,8 +1402,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0X30, 0x01, new byte[]{(byte) heartbeat});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0X30, 0x01, new byte[]{(byte) heartbeat});
       }
 
       public int resultType() {
@@ -1397,7 +1416,7 @@ public class SK4Client implements ICommand {
   public Promise<Integer> getHeartbeatParam() {
     final Promise<Integer> promise = new Promise<Integer>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess((int) data[1]);
@@ -1406,8 +1425,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0X31, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0X31, 0x00, null);
       }
 
       public int resultType() {
@@ -1420,7 +1439,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> restWifi() {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
@@ -1429,8 +1448,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x32, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x32, 0x00, null);
       }
 
       public int resultType() {
@@ -1443,7 +1462,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setBranchWorkIntervalTime(final int intervalTime) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
@@ -1452,8 +1471,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x34, 0x01, new byte[]{(byte) intervalTime});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x34, 0x01, new byte[]{(byte) intervalTime});
       }
 
       public int resultType() {
@@ -1466,7 +1485,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setBranchAnts(final int... ants) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
@@ -1475,12 +1494,12 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         byte data0 = 0;
         for (int bit = 0; bit < ants.length; bit++) {
           data0 |= (1 << ants[bit] - 1);
         }
-        return new SK4Protocol(0x35, 0x01, new byte[]{data0});
+        return new ReaderProtocol(0x35, 0x01, new byte[]{data0});
       }
 
       public int resultType() {
@@ -1493,7 +1512,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setBranchWorkPowers(final BranchAntPowerParam... params) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
@@ -1502,7 +1521,7 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
+      public ReaderProtocol writeProtocol() {
         byte[] data = new byte[16];
         for (int bit = 0; bit < data.length; bit++) {
           int power = BranchAntPowerParam.indexOfPower(bit + 1, params);
@@ -1510,7 +1529,7 @@ public class SK4Client implements ICommand {
             data[bit] = (byte) power;
           }
         }
-        return new SK4Protocol(0x40, 0x0C, data);
+        return new ReaderProtocol(0x40, 0x0C, data);
       }
 
       public int resultType() {
@@ -1523,7 +1542,7 @@ public class SK4Client implements ICommand {
   public Promise<List<BranchAntPowerParam>> getBranchWorkPowers() {
     final Promise<List<BranchAntPowerParam>> promise = new Promise<List<BranchAntPowerParam>>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           List<BranchAntPowerParam> powerParams = new ArrayList<BranchAntPowerParam>();
@@ -1536,8 +1555,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x41, 0x00, null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x41, 0x00, null);
       }
 
       public int resultType() {
@@ -1550,7 +1569,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setRelayWorkTime(final int relay1, final int relay2) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
@@ -1559,8 +1578,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x36, 0x02, new byte[]{(byte) relay1, (byte) relay2});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x36, 0x02, new byte[]{(byte) relay1, (byte) relay2});
       }
 
       public int resultType() {
@@ -1573,7 +1592,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setReaderTriggerWorkTime(final int time) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
@@ -1582,8 +1601,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x37, 0x01, new byte[]{(byte) time});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x37, 0x01, new byte[]{(byte) time});
       }
 
       public int resultType() {
@@ -1596,7 +1615,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> setReaderAlarmIntervalTime(final int intervalTime) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
@@ -1605,8 +1624,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x38, 0x01, new byte[]{(byte) intervalTime});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x38, 0x01, new byte[]{(byte) intervalTime});
       }
 
       public int resultType() {
@@ -1619,7 +1638,7 @@ public class SK4Client implements ICommand {
   public Promise<Boolean> restart() {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(true);
@@ -1628,8 +1647,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x39, 0x01, new byte[]{0x00});
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x39, 0x01, new byte[]{0x00});
       }
 
       public int resultType() {
@@ -1643,7 +1662,7 @@ public class SK4Client implements ICommand {
   public Promise<String> getSerialNum() {
     final Promise<String> promise = new Promise<String>();
     abstractConnection.send(new Protocol() {
-      public void readProtocol(SK4Protocol protocol) {
+      public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
           promise.onSuccess(String.format("%d%d%d",data[1],data[2],data[3]));
@@ -1652,8 +1671,8 @@ public class SK4Client implements ICommand {
         }
       }
 
-      public SK4Protocol writeProtocol() {
-        return new SK4Protocol(0x42,0x00,null);
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x42,0x00,null);
       }
 
       public int resultType() {

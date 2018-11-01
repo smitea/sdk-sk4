@@ -10,7 +10,7 @@ import java.net.SocketAddress;
  * @author smitea
  * @since 2018-10-30
  */
-public interface FutureConnection<Option extends SocketAddress> {
+public interface IFutureConnection<Option extends SocketAddress> {
   /**
    * 是否已连接
    *
@@ -22,7 +22,7 @@ public interface FutureConnection<Option extends SocketAddress> {
    * 连接设备
    * @return 返回Future
    */
-  public Future<Void> connect(Option option);
+  public Future<ICommand> connect(Option option);
 
   /**
    * 断开设备

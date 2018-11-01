@@ -14,7 +14,7 @@ import io.netty.channel.rxtx.RxtxChannelConfig;
  * @author smitea
  * @since 2018-10-30
  */
-public class SerialConnectionI extends AbstractConnectionI<SerialParam> {
+class SerialConnection extends AbstractConnection<SerialParam> {
 
   protected EventLoopGroup eventLoopGroup() {
     return new OioEventLoopGroup(2);

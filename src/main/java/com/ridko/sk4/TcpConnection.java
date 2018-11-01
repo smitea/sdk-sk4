@@ -11,10 +11,11 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import java.net.SocketAddress;
 
 /**
+ * TCP连接器
  * @author smitea
  * @since 2018-10-30
  */
-public class TcpConnectionI extends AbstractConnectionI<SocketAddress> {
+class TcpConnection extends AbstractConnection<SocketAddress> {
   protected EventLoopGroup eventLoopGroup() {
     return new NioEventLoopGroup(2);
   }

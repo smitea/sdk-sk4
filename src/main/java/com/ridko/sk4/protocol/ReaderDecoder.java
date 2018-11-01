@@ -14,7 +14,7 @@ import java.util.List;
  *
  * @author smitea
  */
-public class SK4Decoder extends ByteToMessageDecoder {
+public class ReaderDecoder extends ByteToMessageDecoder {
     private volatile int head;
     private volatile int end1;
     private volatile int end2;
@@ -28,7 +28,7 @@ public class SK4Decoder extends ByteToMessageDecoder {
      * @param end1 数据结束符1
      * @param end2 数据结束符2
      */
-    public SK4Decoder(int head, int end1, int end2) {
+    public ReaderDecoder(int head, int end1, int end2) {
         this.head = head;
         this.end1 = end1;
         this.end2 = end2;

@@ -1,6 +1,7 @@
 package com.ridko.sk4.entity;
 
 import com.ridko.sk4.common.HexTools;
+import com.ridko.sk4.common.PropertyTools;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -114,5 +115,53 @@ public class FrequencyTest {
             antWorkAndWaitTime.getAnt3WorkTime(),
             antWorkAndWaitTime.getAnt4WorkTime(),
             antWorkAndWaitTime.getWaitTime()));
+  }
+
+  @Test
+  public void testGpio() {
+    byte[] data = new byte[]{0x01, (byte) 0xFF, 0x0F};
+    byte _index = data[1];
+    byte _value = data[2];
+
+    Gpios gpios = new Gpios();
+    for (int bit = 0; bit < 8; bit++) {
+      int _bit = (1 << bit);
+      if ((_index & _bit) == _bit) {
+        gpios.add(bit+1, ((_value & _bit) == _bit));
+      }
+    }
+    System.out.println();
+    for (Gpios.Gpio gpio : gpios.gpios()) {
+      System.out.print(String.format("%d : %s |\t", gpio.getIndex(), gpio.isHight()));
+    }
+    System.out.println();
+  }
+
+  @Test
+  public void testQtParam() {
+    byte data1 = 0x01;
+    QtParam qtParam = new QtParam((data1 & 0x01) == 0x01, (data1 & 0x02) == 0x02);
+    System.out.println(String.format("获取的Qt参数为 \t%s |\t %s", qtParam.isCloseControl() ? "启用近距离控制" : "无近距离控制", qtParam.isEnabledPublicMemoryMap() ? "使用 Public Memory Map" : "启用 Private Memory Map"));
+  }
+
+  @Test
+  public void testBranchAntPowerParam(){
+    byte[] data = new byte[]{0x01,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E};
+    List<BranchAntPowerParam> powerParams = new ArrayList<BranchAntPowerParam>();
+    for (int bit = 0; bit < 16; bit++) {
+      powerParams.add(new BranchAntPowerParam(bit + 1, data[bit + 1]));
+    }
+    System.out.println();
+    for (BranchAntPowerParam powerParam : powerParams) {
+      System.out.println(String.format("Ant:%d Power:%d",powerParam.getIndex(),powerParam.getPower()));
+    }
+    System.out.println();
+  }
+
+  @Test
+  public void testProperty(){
+    System.setProperty("sk4.debug","true");
+    Boolean property = PropertyTools.getProperty("sk4.debug", false);
+    assert property;
   }
 }

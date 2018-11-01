@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author smitea
  * @since 2018-10-30
  */
-abstract class AbstractConnectionI<Option extends SocketAddress> implements IReaderConnection<Option> {
+abstract class AbstractConnection<Option extends SocketAddress> implements IReaderConnection<Option> {
   /** 连接事件监听 */
   private IListenter<ConnectEvent> connectEventIListenter;
   /** 防盗门进出监听 */
@@ -52,7 +52,7 @@ abstract class AbstractConnectionI<Option extends SocketAddress> implements IRea
   /** 指令回调处理集合 */
   private Map<Integer, Protocol> protocolHandlerMap;
 
-  public AbstractConnectionI() {
+  public AbstractConnection() {
     bootstrap = new Bootstrap();
     eventLoopGroup = eventLoopGroup();
     protocolHandlerMap = new ConcurrentHashMap<Integer, Protocol>();
@@ -73,21 +73,21 @@ abstract class AbstractConnectionI<Option extends SocketAddress> implements IRea
 
   /** 设置连接状态监听器 */
   public void setConnectEventIListenter(IListenter<ConnectEvent> connectEventIListenter) {
-    synchronized (AbstractConnectionI.class) {
+    synchronized (AbstractConnection.class) {
       this.connectEventIListenter = connectEventIListenter;
     }
   }
 
   /** 设置标签巡查监听器 */
   public void setTagListenter(ITagListenter tagListenter) {
-    synchronized (AbstractConnectionI.class) {
+    synchronized (AbstractConnection.class) {
       this.tagListenter = tagListenter;
     }
   }
 
   /** 设置防盗门进出监听器 */
   public void setChannelValueIListenter(IListenter<ChannelValue> channelValueIListenter) {
-    synchronized (AbstractConnectionI.class) {
+    synchronized (AbstractConnection.class) {
       this.channelValueIListenter = channelValueIListenter;
     }
   }
@@ -107,8 +107,11 @@ abstract class AbstractConnectionI<Option extends SocketAddress> implements IRea
     return isStarted;
   }
 
-  public Future<Void> connect(Option option) {
-    final Promise<Void> promise = new Promise<Void>();
+  public Future<ICommand> connect(Option option) {
+    final Promise<ICommand> promise = new Promise<ICommand>();
+
+    final AbstractConnection abstractConnection = this;
+
     try {
       notifyConnectEvent(ConnectEvent.CONNECTION);
 
@@ -120,7 +123,7 @@ abstract class AbstractConnectionI<Option extends SocketAddress> implements IRea
         public void operationComplete(ChannelFuture channelFuture) throws Exception {
           if (channelFuture.isSuccess()) {
             // 触发成功消息
-            promise.onSuccess(null);
+            promise.onSuccess(new ReaderClient(abstractConnection));
             // 设置已连接状态
             isConnected = true;
 

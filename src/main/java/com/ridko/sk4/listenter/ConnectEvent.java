@@ -9,6 +9,7 @@ package com.ridko.sk4.listenter;
 public enum ConnectEvent {
   CONNECTION("正在连接中"),
   CONNECTED("已连接"),
+  HEART_BEAT("心跳包"),
   RETRY_CONNECTION("重试连接"),
   DISCONNECTION("正在断开连接"),
   DISCONNECTED("连接已断开");

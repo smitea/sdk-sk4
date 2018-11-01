@@ -1,6 +1,6 @@
 package com.ridko.sk4.common;
 
-import com.ridko.sk4.protocol.SK4Protocol;
+import com.ridko.sk4.protocol.ReaderProtocol;
 
 import java.nio.ByteBuffer;
 import java.util.Locale;
@@ -11,16 +11,16 @@ import java.util.Locale;
  * @since 2018-10-30
  */
 public class HexTools {
-    public static void crc16(SK4Protocol sk4Protocol) {
-        int crc = crcSource(sk4Protocol);
-        sk4Protocol.setCrc(crc);
+    public static void crc16(ReaderProtocol readerProtocol) {
+        int crc = crcSource(readerProtocol);
+        readerProtocol.setCrc(crc);
     }
 
-    private static int crcSource(SK4Protocol sk4Protocol) {
-        int crc = (sk4Protocol.getType() & 0xFF) + (sk4Protocol.getLen() & 0xFF);
-        if(sk4Protocol.getData() != null) {
-            for (int i = 0; i < sk4Protocol.getData().length; i++) {
-                crc += sk4Protocol.getData()[i] & 0xFF;
+    private static int crcSource(ReaderProtocol readerProtocol) {
+        int crc = (readerProtocol.getType() & 0xFF) + (readerProtocol.getLen() & 0xFF);
+        if(readerProtocol.getData() != null) {
+            for (int i = 0; i < readerProtocol.getData().length; i++) {
+                crc += readerProtocol.getData()[i] & 0xFF;
             }
         }
         return crc;

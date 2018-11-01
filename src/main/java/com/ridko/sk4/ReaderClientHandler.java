@@ -1,12 +1,10 @@
 package com.ridko.sk4;
 
-import com.ridko.sk4.common.HexTools;
 import com.ridko.sk4.handler.ProtocolHandler;
 import com.ridko.sk4.listenter.ConnectEvent;
 import com.ridko.sk4.listenter.IListenter;
-import com.ridko.sk4.protocol.SK4Protocol;
+import com.ridko.sk4.protocol.ReaderProtocol;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
@@ -15,7 +13,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
  * 通道处理器
  * @author smitea
  */
-class SK4ClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
+class ReaderClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
   private ProtocolHandler protocolHandler;
 
@@ -70,12 +68,12 @@ class SK4ClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
 //        System.out.println(TYPE +" "+HexTools.byteArrayToHexString(data));
 
-        SK4Protocol sk4Protocol = new SK4Protocol();
-        sk4Protocol.setData(data);
-        sk4Protocol.setCrc(CRC & 0xFF);
-        sk4Protocol.setType(TYPE & 0xFF);
+        ReaderProtocol readerProtocol = new ReaderProtocol();
+        readerProtocol.setData(data);
+        readerProtocol.setCrc(CRC & 0xFF);
+        readerProtocol.setType(TYPE & 0xFF);
         // 回调处理
-        protocolHandler.handler(sk4Protocol);
+        protocolHandler.handler(readerProtocol);
       } catch (Exception ignored) { }
     }
   }

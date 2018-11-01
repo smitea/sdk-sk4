@@ -6,7 +6,7 @@ package com.ridko.sk4.protocol;
  * @author smitea
  * @since 2018-10-30
  */
-public class SK4Protocol {
+public class ReaderProtocol {
   /**
    * 指令头
    */
@@ -80,16 +80,16 @@ public class SK4Protocol {
     return end2;
   }
 
-  public SK4Protocol() {
+  public ReaderProtocol() {
   }
 
-  public SK4Protocol(int type, int len, byte[] data) {
+  public ReaderProtocol(int type, int len, byte[] data) {
     this.type = type;
     this.len = len;
     this.data = data;
   }
 
-  public SK4Protocol(int type, int len, byte[] data, int crc) {
+  public ReaderProtocol(int type, int len, byte[] data, int crc) {
     this.type = type;
     this.len = len;
     this.data = data;

@@ -11,14 +11,14 @@ public interface Protocol {
      *
      * @param protocol SK4数据协议
      */
-    void readProtocol(SK4Protocol protocol);
+    void readProtocol(ReaderProtocol protocol);
 
     /**
      * 发送的指令内容
      *
      * @return 返回SK4数据协议
      */
-    SK4Protocol writeProtocol();
+    ReaderProtocol writeProtocol();
 
     /**
      * 获取数据响应的指令类型

@@ -6,11 +6,13 @@ import com.ridko.sk4.listenter.IListenter;
 import com.ridko.sk4.protocol.ReaderProtocol;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ConnectTimeoutException;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 
 /**
  * 通道处理器
+ *
  * @author smitea
  */
 class ReaderClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
@@ -30,6 +32,13 @@ class ReaderClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
     // 发生异常后关闭
+    if (listenter != null) {
+      if (cause instanceof ConnectTimeoutException) {
+        listenter.notify(ConnectEvent.DISCONNECTION);
+      } else if (cause instanceof java.io.IOException) {
+        listenter.notify(ConnectEvent.DISCONNECTION);
+      }
+    }
     ctx.close();
   }
 
@@ -39,6 +48,22 @@ class ReaderClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
       listenter.notify(ConnectEvent.DISCONNECTION);
     }
     super.channelInactive(ctx);
+  }
+
+  @Override
+  public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    if(listenter!=null){
+      listenter.notify(ConnectEvent.CONNECTED);
+    }
+    super.channelActive(ctx);
+  }
+
+  @Override
+  public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+    if (listenter != null) {
+      listenter.notify(ConnectEvent.CONNECTION);
+    }
+    super.channelRegistered(ctx);
   }
 
   @Override
@@ -53,12 +78,6 @@ class ReaderClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
   protected void channelRead0(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf) throws Exception {
     if (protocolHandler != null) {
       try {
-        // 打印数据内容
-//        int capacity = byteBuf.capacity();
-//        byte[] datas = new byte[capacity];
-//        byteBuf.readBytes(datas);
-//        String s = HexTools.byteArrayToHexString(datas);
-
         int HEAD = byteBuf.readByte();
         int TYPE = byteBuf.readByte();
         int LEN = byteBuf.readByte();
@@ -66,15 +85,14 @@ class ReaderClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
         byteBuf.readBytes(data);
         int CRC = byteBuf.readByte();
 
-//        System.out.println(TYPE +" "+HexTools.byteArrayToHexString(data));
-
         ReaderProtocol readerProtocol = new ReaderProtocol();
         readerProtocol.setData(data);
         readerProtocol.setCrc(CRC & 0xFF);
         readerProtocol.setType(TYPE & 0xFF);
         // 回调处理
         protocolHandler.handler(readerProtocol);
-      } catch (Exception ignored) { }
+      } catch (Exception ignored) {
+      }
     }
   }
 }

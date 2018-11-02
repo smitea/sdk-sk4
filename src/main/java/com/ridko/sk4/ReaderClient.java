@@ -1533,7 +1533,7 @@ class ReaderClient implements ICommand {
       }
 
       public int resultType() {
-        return 0xB9;
+        return 0xBA;
       }
     });
     return promise;
@@ -1560,7 +1560,7 @@ class ReaderClient implements ICommand {
       }
 
       public int resultType() {
-        return 0xBA;
+        return 0xBB;
       }
     });
     return promise;
@@ -1589,6 +1589,30 @@ class ReaderClient implements ICommand {
     return promise;
   }
 
+  @Override
+  public Promise<Boolean> setRelayWorkTimeNew(final int relay) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(ReaderProtocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set relay workTime is failed"));
+        }
+      }
+
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x36, 0x01, new byte[]{(byte) relay});
+      }
+
+      public int resultType() {
+        return 0xB6;
+      }
+    });
+    return promise;
+  }
+
   public Promise<Boolean> setReaderTriggerWorkTime(final int time) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
@@ -1606,7 +1630,7 @@ class ReaderClient implements ICommand {
       }
 
       public int resultType() {
-        return 0xB6;
+        return 0xB7;
       }
     });
     return promise;
@@ -1629,7 +1653,7 @@ class ReaderClient implements ICommand {
       }
 
       public int resultType() {
-        return 0xB7;
+        return 0xB8;
       }
     });
     return promise;
@@ -1652,7 +1676,7 @@ class ReaderClient implements ICommand {
       }
 
       public int resultType() {
-        return 0xB8;
+        return 0xB9;
       }
     });
     return promise;
@@ -1665,18 +1689,308 @@ class ReaderClient implements ICommand {
       public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
-          promise.onSuccess(String.format("%d%d%d",data[1],data[2],data[3]));
+          promise.onSuccess(String.format("%d%d%d", data[1], data[2], data[3]));
         } else {
-          promise.onFailure(new SetException("the get serial number is failed"));
+          promise.onFailure(new GetException("the get serial number is failed"));
         }
       }
 
       public ReaderProtocol writeProtocol() {
-        return new ReaderProtocol(0x42,0x00,null);
+        return new ReaderProtocol(0x42, 0x00, null);
       }
 
       public int resultType() {
-        return 0xBB;
+        return 0xC2;
+      }
+    });
+    return promise;
+  }
+
+  @Override
+  public Promise<ChannelDoorCountNUm> getChannelDoorCountNUm() {
+    final Promise<ChannelDoorCountNUm> promise = new Promise<ChannelDoorCountNUm>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(ReaderProtocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          int outNum = ((data[1] << 8) & 0xFF) | (data[2] & 0xFF);
+          int inNum = ((data[3] << 8) & 0xFF) | (data[4] & 0xFF);
+          promise.onSuccess(new ChannelDoorCountNUm(inNum, outNum));
+        } else {
+          promise.onFailure(new GetException("the get channel door count number is failed"));
+        }
+      }
+
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x3C, 0x00, null);
+      }
+
+      public int resultType() {
+        return 0xBC;
+      }
+    });
+    return promise;
+  }
+
+  @Override
+  public Promise<Boolean> setChannelDoorCountNUm(final int inNum, final int outNum) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(ReaderProtocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set channel door count number is failed"));
+        }
+      }
+
+      public ReaderProtocol writeProtocol() {
+        byte data0 = (byte) ((outNum >> 8) & 0xFF);
+        byte data1 = (byte) (outNum & 0xFF);
+
+        byte data2 = (byte) ((inNum >> 8) & 0xFF);
+        byte data3 = (byte) (inNum & 0xFF);
+        return new ReaderProtocol(0x3D, 0x04, new byte[]{data0, data1, data2, data3});
+      }
+
+      public int resultType() {
+        return 0xBD;
+      }
+    });
+    return promise;
+  }
+
+  @Override
+  public Promise<Boolean> setChannelDoorDelayWorkTime(final int delayWorkTime) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(ReaderProtocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set channel door delay work time is failed"));
+        }
+      }
+
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x3E, 0x01, new byte[]{(byte) delayWorkTime});
+      }
+
+      public int resultType() {
+        return 0xBE;
+      }
+    });
+    return promise;
+  }
+
+  @Override
+  public Promise<Boolean> setAntWorkTimeFor16Channel(final int time) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(ReaderProtocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set ant work time for 16 channel is failed"));
+        }
+      }
+
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x4D, 0x01, new byte[]{(byte) time});
+      }
+
+      public int resultType() {
+        return 0xCD;
+      }
+    });
+    return promise;
+  }
+
+  @Override
+  public Promise<Integer> getAntWorkTimeFor16Channel() {
+    final Promise<Integer> promise = new Promise<Integer>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(ReaderProtocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          int time = data[1];
+          promise.onSuccess(time);
+        } else {
+          promise.onFailure(new GetException("the get ant work time for 16 Channel is failed"));
+        }
+      }
+
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x4E, 0x00, null);
+      }
+
+      public int resultType() {
+        return 0xCE;
+      }
+    });
+    return promise;
+  }
+
+  @Override
+  public Promise<Ants> getAntsFor16Channel() {
+    final Promise<Ants> antsPromise = new Promise<Ants>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(ReaderProtocol protocol) {
+        byte[] data = protocol.getData();
+        Ants ants = new Ants();
+        byte data0 = data[0];
+
+        if (data0 == 0x01) {
+          byte data1 = data[1];
+          byte data2 = data[2];
+
+          int value = ((data1 & 0xFF) << 8) | (data2 & 0xFF);
+          for (int bit = 0; bit < 16; bit++) {
+            int _bit = (1 << bit);
+            if ((value & _bit) == _bit) {
+              ants.add(bit + 1, true);
+            } else {
+              ants.add(bit + 1, false);
+            }
+          }
+          antsPromise.onSuccess(ants);
+        } else {
+          antsPromise.onFailure(new GetException("the get ant for 16 Channel is failed"));
+        }
+      }
+
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x4F, 0x00, null);
+      }
+
+      public int resultType() {
+        return 0xCF;
+      }
+    });
+    return antsPromise;
+  }
+
+  @Override
+  public Promise<Boolean> setAntsFor16Channel(final Ants ants) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(ReaderProtocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set ants is failed"));
+        }
+      }
+
+      public ReaderProtocol writeProtocol() {
+        List<Ants.Ant> _ants = ants.getAnts();
+        int value = 0;
+        for (Ants.Ant ant : _ants) {
+          if (ant.isOn()) {
+            value |= (1 << ant.getIndex() - 1);
+          }
+        }
+        byte data1 = (byte) ((value >> 8) & 0xFF);
+        byte data2 = (byte) ((value & 0xFF));
+        return new ReaderProtocol(0x50, 0x02, new byte[]{data1, data2});
+      }
+
+      public int resultType() {
+        return 0xD0;
+      }
+    });
+
+    return promise;
+  }
+
+  @Override
+  public Promise<Boolean> setAntPower(final int power) {
+    final Promise<Boolean> promise = new Promise<Boolean>();
+
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(ReaderProtocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set ant power is failed"));
+        }
+      }
+
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x51, 0x00, new byte[]{(byte) power});
+      }
+
+      public int resultType() {
+        return 0xD1;
+      }
+    });
+    return promise;
+  }
+
+  @Override
+  public Promise<Boolean> setDisplayData(final int cNum, final int pNum, final byte[]... data) {
+    final Promise<Boolean> promise = new Promise<>();
+    abstractConnection.send(new Protocol() {
+      @Override
+      public void readProtocol(ReaderProtocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set display data is failed"));
+        }
+      }
+
+      @Override
+      public ReaderProtocol writeProtocol() {
+        ByteBuf byteBuf = Unpooled.buffer();
+        byteBuf.writeByte(cNum);
+        byteBuf.writeByte(pNum);
+        for (byte[] item : data) {
+          byteBuf.writeByte(item.length);
+          byteBuf.writeBytes(item);
+        }
+
+        byte[] data = ByteBufUtil.getBytes(byteBuf);
+        return new ReaderProtocol(0x52, data.length, data);
+      }
+
+      @Override
+      public int resultType() {
+        return 0xD2;
+      }
+    });
+    return promise;
+  }
+
+  @Override
+  public Promise<Boolean> setSleep(final int cNum, final int pNum) {
+    final Promise<Boolean> promise = new Promise<>();
+    abstractConnection.send(new Protocol() {
+      @Override
+      public void readProtocol(ReaderProtocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          promise.onSuccess(true);
+        } else {
+          promise.onFailure(new SetException("the set sleep is failed"));
+        }
+      }
+
+      @Override
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x53,0x02,new byte[]{(byte) cNum, (byte) pNum});
+      }
+
+      @Override
+      public int resultType() {
+        return 0xD3;
       }
     });
     return promise;

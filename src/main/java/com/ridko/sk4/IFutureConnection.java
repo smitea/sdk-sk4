@@ -28,5 +28,5 @@ public interface IFutureConnection<Option extends SocketAddress> {
    * 断开设备
    * @return 返回Future
    */
-  public Future<Void> disconnect();
+  public void disconnect();
 }

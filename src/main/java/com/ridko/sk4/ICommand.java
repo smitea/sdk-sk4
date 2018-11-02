@@ -16,6 +16,7 @@ public interface ICommand {
   /**
    * 设置功率
    * <p style="color:red">读功率/写功率取值范围 5-30, 单位 dBm</p>
+   *
    * @param readPower  读功率
    * @param writePower 写功率
    * @param isLoop     是否开环
@@ -73,14 +74,14 @@ public interface ICommand {
   public Promise<List<Integer>> getOutputFrequency();
 
   /**
-   * 设置 gen2 参数
+   * 设置 Q算法 参数设置
    *
    * @param gen2 gen2 参数
    */
   public Promise<Boolean> setGen2(Gen2 gen2);
 
   /**
-   * 查询 gen2 参数设置
+   * 查询 Q算法 参数
    *
    * @return gen2 参数
    */
@@ -240,6 +241,7 @@ public interface ICommand {
 
   /**
    * 设置循环查询标签工作时间及间断时间
+   * <p style="color:red">该命令仅限于 M1 模块使用,如 M4 模块使用，会发生异常</p>
    *
    * @param workTime        循环查询标签工作时间
    * @param interruptedTime 间断时间
@@ -255,7 +257,7 @@ public interface ICommand {
   public Promise<CyclicQueryWorkAndResponseTime> getCyclicQueryWorkAndResponseTime();
 
   /**
-   * 设置天线工作时间及等待时间
+   * 设置天线循环工作时间和间隔时间
    * <p style="color:red">设置天线工作时间只适用 M4 设备。一旦设置后，模块断电后，会默认将四个天线的工作时间，都统一设置为 ANT1 的工作时间。</p>
    *
    * @param ant1WorkTime 天线 1 的工作时间 （单位 ms，范围 30ms—60000ms）
@@ -292,7 +294,7 @@ public interface ICommand {
 
   /**
    * 设置模块通讯波特率
-   * <p style="color:red">需要重启模块，设置才能生效。</p>
+   * <p style="color:red">只适用于单独模块，不适用设备。</p>
    *
    * @param baudRate 模块通讯波特率
    */
@@ -392,6 +394,7 @@ public interface ICommand {
 
   /**
    * 天线分支器工作天线设置
+   *
    * @param ants 天线参数列表
    */
   public Promise<Boolean> setBranchAnts(int... ants);
@@ -399,12 +402,14 @@ public interface ICommand {
   /**
    * 设置当前分支器循环工作功率的大小
    * <p style="color:red">设置天线功率只适用设备连接分支器</p>
+   *
    * @param params 分支器循环工作功率设置列表
    */
-  public Promise<Boolean> setBranchWorkPowers(BranchAntPowerParam...params);
+  public Promise<Boolean> setBranchWorkPowers(BranchAntPowerParam... params);
 
   /**
    * 获取分支器循环工作功率
+   * <p style="color:red">设置天线功率只适用设备连接分支器</p>
    * @return 分支器循环工作功率列表
    */
   public Promise<List<BranchAntPowerParam>> getBranchWorkPowers();
@@ -412,20 +417,32 @@ public interface ICommand {
   /**
    * 设置通道模式继电器工作时间
    * <p>TIME1 和 TIME2: 继电器工作时间参数; 以 100ms 为单位，参数范围 100ms～256*100ms。（默认值 TIME 为 10）</p>
+   *
    * @param relay1 继电器 1 工作时间
    * @param relay2 继电器 2 工作时间
    */
-  public Promise<Boolean> setRelayWorkTime(int relay1,int relay2);
+  @Deprecated
+  public Promise<Boolean> setRelayWorkTime(int relay1, int relay2);
+
+  /**
+   * 设置通道模式继电器工作时间(V2.0版本)
+   * <p>继电器工作时间参数; 以100ms为单位，参数范围100ms～255*100ms。（默认值TIME为 10）</p>
+   *
+   * @param relay 继电器工作时间
+   */
+  public Promise<Boolean> setRelayWorkTimeNew(int relay);
 
   /**
    * 设置读写器触发工作时间
    * <p>触发工作时间参数; 以 100ms 为单位，参数范围 100ms～256*100s。（默认值 TIME 为 2）</p>
+   *
    * @param time 触发读写器工作时间
    */
   public Promise<Boolean> setReaderTriggerWorkTime(int time);
 
   /**
    * 设置读写器报警间隔时间
+   *
    * @param intervalTime 设置报警间隔时间参数; 以 1s 为单位，参数范围 3s～120s。（默认值 TIME为 5）
    */
   public Promise<Boolean> setReaderAlarmIntervalTime(int intervalTime);
@@ -437,7 +454,72 @@ public interface ICommand {
 
   /**
    * 获取设备序列号
-   * @return  返回设备序列号
+   *
+   * @return 返回设备序列号
    */
   public Promise<String> getSerialNum();
+
+  /**
+   * 获取通道门进出人数统计
+   * @return 通道门进出人数记录统计
+   */
+  public Promise<ChannelDoorCountNUm> getChannelDoorCountNUm();
+
+  /**
+   * 设置通道门进出人数统计
+   * @return 通道门进出人数记录统计
+   */
+  public Promise<Boolean> setChannelDoorCountNUm(int inNum,int outNum);
+
+  /**
+   * 设置通道门延迟工作时间
+   * @param delayWorkTime 通道门延迟工作时间
+   */
+  public Promise<Boolean> setChannelDoorDelayWorkTime(int delayWorkTime);
+
+  /**
+   * 设置16通道读写器天线工作时间
+   * @param time 天线工作时间
+   */
+  public Promise<Boolean> setAntWorkTimeFor16Channel(int time);
+
+  /**
+   * 获取16通道读写器天线工作时间
+   * @return  天线工作时间
+   */
+  public Promise<Integer> getAntWorkTimeFor16Channel();
+
+  /**
+   * 获取16通道读写器工作天线
+   * @return 工作天线列表
+   */
+  public Promise<Ants> getAntsFor16Channel();
+
+  /**
+   * 设置16通道读写器工作天线
+   * @param ants 工作天线列表
+   */
+  public Promise<Boolean> setAntsFor16Channel(Ants ants);
+
+  /**
+   * 设置天线功率
+   * @param power 天线功率
+   */
+  public Promise<Boolean> setAntPower(int power);
+
+  /**
+   * 设置屏显示数据
+   * @param cNum 串口号
+   * @param pNum 屏号
+   * @param data 显示屏信息
+   */
+  @Deprecated
+  public Promise<Boolean> setDisplayData(int cNum,int pNum,byte[]... data);
+
+  /**
+   * 设置屏待机
+   * @param cNum 串口号
+   * @param pNum 屏号
+   */
+  public Promise<Boolean> setSleep(int cNum,int pNum);
 }

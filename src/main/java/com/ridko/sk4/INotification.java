@@ -19,6 +19,7 @@ public interface INotification {
   public void setTagListenter(ITagListenter tagListenter);
 
   /** 设置防盗门进出监听器 */
+  @Deprecated
   public void setChannelValueIListenter(IListenter<ChannelValue> channelValueIListenter);
 
   /** 设置错误信息处理监听器 */

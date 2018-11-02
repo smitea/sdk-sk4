@@ -14,7 +14,7 @@ import io.netty.handler.codec.MessageToByteEncoder;
  */
 public class ReaderEncoder extends MessageToByteEncoder<ReaderProtocol> {
 
-    private boolean isDebug =  PropertyTools.getProperty("sk4.debug", false);
+    private final boolean isDebug =  PropertyTools.getProperty("sk4.debug", false);
 
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext, ReaderProtocol readerProtocol, ByteBuf out) throws Exception {

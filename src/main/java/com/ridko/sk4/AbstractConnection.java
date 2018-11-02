@@ -20,6 +20,9 @@ import io.netty.channel.*;
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 连接器
@@ -48,6 +51,10 @@ abstract class AbstractConnection<Option extends SocketAddress> implements IRead
   private boolean isConnected = false;
   /** 询读状态标识 */
   private boolean isStarted = false;
+  /** 重试连接次数 */
+  private int retryCount = 3;
+  /** 连接超时时间 */
+  private int timeout = 3000;
 
   /** 指令回调处理集合 */
   private Map<Integer, Protocol> protocolHandlerMap;
@@ -63,13 +70,6 @@ abstract class AbstractConnection<Option extends SocketAddress> implements IRead
 
   /** 配置IO启动对象 */
   protected abstract void configBootstrap(Bootstrap bootstrap, EventLoopGroup group, Option param);
-
-  /** 通知网络状态 */
-  private void notifyConnectEvent(ConnectEvent event) {
-    if (connectEventIListenter != null) {
-      connectEventIListenter.notify(event);
-    }
-  }
 
   /** 设置连接状态监听器 */
   public void setConnectEventIListenter(IListenter<ConnectEvent> connectEventIListenter) {
@@ -107,23 +107,19 @@ abstract class AbstractConnection<Option extends SocketAddress> implements IRead
     return isStarted;
   }
 
-  public Future<ICommand> connect(Option option) {
+  public Future<ICommand> connect(final Option option) {
     final Promise<ICommand> promise = new Promise<ICommand>();
 
     final AbstractConnection abstractConnection = this;
 
     try {
-      notifyConnectEvent(ConnectEvent.CONNECTION);
-
       // 配置启动项
       configBootstrap(bootstrap, eventLoopGroup, option);
-      ChannelFuture connect = bootstrap.connect(option);
+      final ChannelFuture connect = bootstrap.connect(option);
       // 添加连接监听
       connect.addListener(new ChannelFutureListener() {
         public void operationComplete(ChannelFuture channelFuture) throws Exception {
           if (channelFuture.isSuccess()) {
-            // 触发成功消息
-            promise.onSuccess(new ReaderClient(abstractConnection));
             // 设置已连接状态
             isConnected = true;
 
@@ -131,8 +127,6 @@ abstract class AbstractConnection<Option extends SocketAddress> implements IRead
             writeChannel = channelFuture.channel();
             // 获取读通道
             ReaderClientHandler readerClientHandler = writeChannel.pipeline().get(ReaderClientHandler.class);
-            // 通知已连接消息
-            notifyConnectEvent(ConnectEvent.CONNECTED);
 
             // 添加错误信息处理
             protocolHandlerMap.put(0xFF, new Protocol() {
@@ -160,7 +154,9 @@ abstract class AbstractConnection<Option extends SocketAddress> implements IRead
               public void readProtocol(ReaderProtocol protocol) {
                 if (protocol.getLen() == 0x04) {
                   // 发送心跳包
-                  notifyConnectEvent(ConnectEvent.HEART_BEAT);
+                  if (connectEventIListenter != null) {
+                    connectEventIListenter.notify(ConnectEvent.HEART_BEAT);
+                  }
                 } else if (protocol.getLen() == 0x01) {
                   if (channelValueIListenter != null) {
                     // 发送通道门检测事件
@@ -197,51 +193,74 @@ abstract class AbstractConnection<Option extends SocketAddress> implements IRead
               }
             });
 
+            final AtomicInteger atomicInteger = new AtomicInteger(0);
             // 设置连接状态监听
-            readerClientHandler.setListenter(connectEventIListenter);
+            readerClientHandler.setListenter(new IListenter<ConnectEvent>() {
+              @Override
+              public void notify(ConnectEvent event) {
+//                if (isConnected && event == ConnectEvent.DISCONNECTION) {
+//                  while (atomicInteger.get() < retryCount) {
+//                    try {
+//                      // 通知重连事件
+//                      if(connectEventIListenter!=null){
+//                        connectEventIListenter.notify(ConnectEvent.RETRY_CONNECTION);
+//                      }
+//
+//                      // 设置连接状态
+//                      isConnected = false;
+//                      // 关闭线程
+//                      eventLoopGroup.shutdownGracefully();
+//                      bootstrap = null;
+//                      eventLoopGroup = null;
+//                      writeChannel = null;
+//                      connect(option).await(timeout, TimeUnit.MILLISECONDS);
+//                      // 恢复默认值
+//                      atomicInteger.getAndSet(0);
+//                      break;
+//                    } catch (Exception ignored) {
+//                      // 发生异常则重连次数-1
+//                      atomicInteger.addAndGet(1);
+//                    }
+//                  }
+//                }
+                if (connectEventIListenter != null) {
+                  connectEventIListenter.notify(event);
+                }
+              }
+            });
+
+            // 触发成功消息
+            promise.onSuccess(new ReaderClient(abstractConnection));
           } else {
             // 触发失败消息
             promise.onFailure(channelFuture.cause());
             // 设置未连接状态
             isConnected = false;
-            // 通知已断开连接消息
-            notifyConnectEvent(ConnectEvent.DISCONNECTED);
           }
         }
       });
     } catch (Exception e) {
       // 触发失败消息
       promise.onFailure(e);
-      // 通知已断开连接消息
-      notifyConnectEvent(ConnectEvent.DISCONNECTED);
     }
     return promise;
   }
 
-  public Future<Void> disconnect() {
-    final Promise<Void> promise = new Promise<Void>();
+  public void disconnect() {
+    // 设置连接状态
+    isConnected = false;
 
-    // 通知正在断开连接的消息
-    notifyConnectEvent(ConnectEvent.DISCONNECTION);
     // 停止询读
-    stop().then(new Callback<Void>() {
-      public void onSuccess(Void value) {
-        // 关闭线程
-        eventLoopGroup.shutdownGracefully();
-        bootstrap = null;
-        eventLoopGroup = null;
-        writeChannel = null;
+    try {
+      stop().await(1, TimeUnit.SECONDS);
+    } catch (Exception ignored) {
+    }
 
-        isConnected = false;
-
-        promise.onSuccess(value);
-      }
-
-      public void onFailure(Throwable value) {
-        promise.onFailure(value);
-      }
-    });
-    return promise;
+    // 关闭线程
+    eventLoopGroup.shutdownGracefully();
+    bootstrap = null;
+    eventLoopGroup = null;
+    writeChannel = null;
   }
 
   public void start() {

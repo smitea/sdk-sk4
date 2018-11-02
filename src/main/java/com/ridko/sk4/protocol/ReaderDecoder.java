@@ -19,7 +19,7 @@ public class ReaderDecoder extends ByteToMessageDecoder {
     private volatile int end1;
     private volatile int end2;
 
-    private boolean isDebug =  PropertyTools.getProperty("sk4.debug", false);
+    private final boolean isDebug =  PropertyTools.getProperty("sk4.debug", false);
 
     /**
      * 初始化解码器

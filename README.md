@@ -1,7 +1,7 @@
 # 深科RFID读写器SDK
 ---
 深科RFID读写器SDK适用于所有深科物联科技有限公司所生产的读写器,有关产品信息请访问 [深科物联-RFID产品中心](http://www.soonke.com/welcome)
-> 此文档只涉及深科RFID读写器SDK的接口调用规范以及接口说明，如需了解更多内容，请自行联系厂商。
+> 此文档只涉及深科RFID读写器SDK的接口调用规范以及接口说明，如需了解更多内容，请自行联系设备制造厂商。
 
 [Java API doc](doc/index.html)
 
@@ -41,7 +41,7 @@ readerClient.getTxPower().then(new Callback<TxPower>() {
   - 指定同步等待时间:同步等待指定时间间隔，直到调用成功或者抛出异常信息后才会执行下一行代码。
   例如:``Gpios result = readerClient.getInputGpio(3).await(2, TimeUnit.SECONDS);``
 
-> 有关于 ``Future<T>`` 具体可参考博客[《Promise实现》](https://smitea.github.io)
+> 有关于 ``Future<T>`` 具体可参考博客 [《Promise实现》](https://smitea.github.io)
 
 ### 连接RFID读写器设备
   * 使用串口连接：（更多串口参数请参考SerialParam类的说明）
@@ -76,7 +76,6 @@ readerClient.getTxPower().then(new Callback<TxPower>() {
     5. ``DISCONNECTION``: 标识正在断开连接，当调用``disconnect``之前或者当检测到读写器已断开时并且重新尝试连接时，会触发该事件；
     6. ``DISCONNECTED``: 标识连接已断开，当调用``disconnect``之后或者当检测到读写器已断开时并且重新3次失败后，会触发该事件；
   * 设备异常监听器: 设备内置错误指令回调监听；
-  * 通道门进出返回值响应监听器: 该监听器只适用于特殊设备场景中,普通RFID读写器可以不设置，在此不作以说明；
 
 设置事件监听器实例:
 
@@ -161,9 +160,8 @@ futureConnection.stop().await(2, TimeUnit.SECONDS);
  // 获取功率
  readerClient.getTxPower().then(new Callback<TxPower>() {
    public void onSuccess(TxPower value) {
-      System.out.println(String.format("功率获取成功:读功率-%d 写功率-%d ", value.getReadPower(), value.getWritePower(), value.isLoop() ? "开环" : "闭环"));
-   }
-
+      System.out.println(String.format("功率获取成功:读功率-%d 写功率-%d ", value.getReadPower(),  value.getWritePower(), value.isLoop() ? "开环" : "闭环"));
+   } 
    public void onFailure(Throwable value) {
       value.fillInStackTrace();
       System.out.println("功率获取失败");

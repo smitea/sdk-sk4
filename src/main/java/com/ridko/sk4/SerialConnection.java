@@ -24,7 +24,7 @@ class SerialConnection extends AbstractConnection<SerialParam> {
     bootstrap.group(group)
             .channel(RxtxChannel.class)
             // 设置接收缓冲区大小(minimum值为发送数据的最小长度<head(1)+type(1)+>len(1)+crc(1)+end1(1)+end2(1)> initial值为单条指令响应最大长度<该值越大会影响到EPC码的读取速率>)
-            .option(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator(6, 100, 100))
+            .option(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator(6, 100, 1024))
             .handler(new ChannelInitializer<RxtxChannel>() {
               @Override
               public void initChannel(RxtxChannel channel) throws Exception {

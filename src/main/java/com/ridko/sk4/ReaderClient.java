@@ -43,6 +43,8 @@ class ReaderClient implements ICommand {
 
       public ReaderProtocol writeProtocol() {
         ReaderProtocol readerProtocol = new ReaderProtocol();
+        readerProtocol.setLen(0x00);
+        readerProtocol.setLen(0x03);
         byte data0 = (byte) (isLoop ? 0 : 1);
         byte data1 = (byte) (readPower & 0xFF);
         byte data2 = (byte) (writePower & 0xFF);
@@ -157,7 +159,7 @@ class ReaderClient implements ICommand {
             gpioPromise.onSuccess(_value == _bit);
           }
         } else {
-          gpioPromise.onFailure(new RuntimeException(String.format("get %d gpio is failed", index)));
+          gpioPromise.onFailure(new GetException(String.format("get %d gpio is failed", index)));
         }
       }
 
@@ -191,7 +193,7 @@ class ReaderClient implements ICommand {
           }
           promise.onSuccess(gpios);
         } else {
-          promise.onFailure(new SetException("the set heartbeat param is failed"));
+          promise.onFailure(new GetException("the set heartbeat param is failed"));
         }
       }
 
@@ -253,7 +255,7 @@ class ReaderClient implements ICommand {
         byte[] datas = protocol.getData();
         List<Integer> frequencies = new ArrayList<Integer>();
         int len = datas[0] & 0xFF;
-        for (int index = 1; index < len + 1; index += 3) {
+        for (int index = 1; index < len * 3; index += 3) {
           if (index + 2 < datas.length) {
             int msb = datas[index] & 0xFF;
             int freq = datas[index + 1] & 0xFF;
@@ -563,12 +565,12 @@ class ReaderClient implements ICommand {
       public void readProtocol(ReaderProtocol protocol) {
         byte[] data = protocol.getData();
         if (data[0] == 0x01) {
-          int len = 0x08;
-          int ant = data[len - 1];
-          byte[] _data = new byte[len - 4];
+          int len = (((data[1] << 8) & 0xFF) | (data[2] & 0xFF)) * 2;
+          int ant = data[len + 3];
+          byte[] _data = new byte[len];
 
           int bit = 0;
-          for (int _bit = 3; _bit < len - 1; _bit++) {
+          for (int _bit = 3; _bit < len + 3; _bit++) {
             _data[bit] = data[_bit];
             bit++;
           }
@@ -1482,33 +1484,6 @@ class ReaderClient implements ICommand {
     return promise;
   }
 
-  public Promise<Boolean> setBranchAnts(final int... ants) {
-    final Promise<Boolean> promise = new Promise<Boolean>();
-    abstractConnection.send(new Protocol() {
-      public void readProtocol(ReaderProtocol protocol) {
-        byte[] data = protocol.getData();
-        if (data[0] == 0x01) {
-          promise.onSuccess(true);
-        } else {
-          promise.onFailure(new SetException("the set branch ants is failed"));
-        }
-      }
-
-      public ReaderProtocol writeProtocol() {
-        byte data0 = 0;
-        for (int bit = 0; bit < ants.length; bit++) {
-          data0 |= (1 << ants[bit] - 1);
-        }
-        return new ReaderProtocol(0x35, 0x01, new byte[]{data0});
-      }
-
-      public int resultType() {
-        return 0XB5;
-      }
-    });
-    return promise;
-  }
-
   public Promise<Boolean> setBranchWorkPowers(final BranchAntPowerParam... params) {
     final Promise<Boolean> promise = new Promise<Boolean>();
     abstractConnection.send(new Protocol() {
@@ -1529,7 +1504,7 @@ class ReaderClient implements ICommand {
             data[bit] = (byte) power;
           }
         }
-        return new ReaderProtocol(0x40, 0x0C, data);
+        return new ReaderProtocol(0x3A, data.length, data);
       }
 
       public int resultType() {
@@ -1556,34 +1531,11 @@ class ReaderClient implements ICommand {
       }
 
       public ReaderProtocol writeProtocol() {
-        return new ReaderProtocol(0x41, 0x00, null);
+        return new ReaderProtocol(0x3B, 0x00, null);
       }
 
       public int resultType() {
         return 0xBB;
-      }
-    });
-    return promise;
-  }
-
-  public Promise<Boolean> setRelayWorkTime(final int relay1, final int relay2) {
-    final Promise<Boolean> promise = new Promise<Boolean>();
-    abstractConnection.send(new Protocol() {
-      public void readProtocol(ReaderProtocol protocol) {
-        byte[] data = protocol.getData();
-        if (data[0] == 0x01) {
-          promise.onSuccess(true);
-        } else {
-          promise.onFailure(new SetException("the set relay workTime is failed"));
-        }
-      }
-
-      public ReaderProtocol writeProtocol() {
-        return new ReaderProtocol(0x36, 0x02, new byte[]{(byte) relay1, (byte) relay2});
-      }
-
-      public int resultType() {
-        return 0xB5;
       }
     });
     return promise;
@@ -1604,6 +1556,31 @@ class ReaderClient implements ICommand {
 
       public ReaderProtocol writeProtocol() {
         return new ReaderProtocol(0x36, 0x01, new byte[]{(byte) relay});
+      }
+
+      public int resultType() {
+        return 0xB6;
+      }
+    });
+    return promise;
+  }
+
+  @Override
+  public Promise<Integer> getRelayWorkTimeNew() {
+    final Promise<Integer> promise = new Promise<Integer>();
+    abstractConnection.send(new Protocol() {
+      public void readProtocol(ReaderProtocol protocol) {
+        byte[] data = protocol.getData();
+        if (data[0] == 0x01) {
+          int value = data[1];
+          promise.onSuccess(value);
+        } else {
+          promise.onFailure(new SetException("the get relay workTime is failed"));
+        }
+      }
+
+      public ReaderProtocol writeProtocol() {
+        return new ReaderProtocol(0x35, 0x00,null);
       }
 
       public int resultType() {
@@ -1923,7 +1900,7 @@ class ReaderClient implements ICommand {
       }
 
       public ReaderProtocol writeProtocol() {
-        return new ReaderProtocol(0x51, 0x00, new byte[]{(byte) power});
+        return new ReaderProtocol(0x51, 0x01, new byte[]{(byte) power});
       }
 
       public int resultType() {
@@ -1985,7 +1962,7 @@ class ReaderClient implements ICommand {
 
       @Override
       public ReaderProtocol writeProtocol() {
-        return new ReaderProtocol(0x53,0x02,new byte[]{(byte) cNum, (byte) pNum});
+        return new ReaderProtocol(0x53, 0x02, new byte[]{(byte) cNum, (byte) pNum});
       }
 
       @Override

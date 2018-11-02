@@ -39,8 +39,6 @@ public class ReaderClientTest {
 
     // 设置串口连接
     // connectSerial();
-
-    Thread.sleep(2000);
   }
 
   /** 连接串口 */
@@ -89,7 +87,6 @@ public class ReaderClientTest {
   /** 测试结束时操作 */
   @After
   public void disconnected() throws Exception {
-    Thread.sleep(1000);
     // 关闭连接对象
     futureConnection.disconnect();
     // 关闭线程池
@@ -159,7 +156,7 @@ public class ReaderClientTest {
   @Test
   public void setTxPower() throws Exception {
     // 设置 读功率30 / 写功率28 / 开环状态
-    readerClient.setTxPower(30, 30, false).await(1, TimeUnit.SECONDS);
+    readerClient.setTxPower(30, 30, true).await(1, TimeUnit.SECONDS);
     System.out.println("功率设置成功");
 
     // 获取读写器功率
@@ -175,15 +172,15 @@ public class ReaderClientTest {
     readerClient.setGpio(gpios).await(1, TimeUnit.SECONDS);
     System.out.println("GPIO设置成功");
 
-    // 获取 GPIO状态
-    Gpios _gpios = readerClient.getGpio().await(1, TimeUnit.SECONDS);
-    for (Gpios.Gpio gpio : _gpios.gpios()) {
-      System.out.println(String.format("GPIO%d : %s |\t", gpio.getIndex(), gpio.isHight() ? "高电平" : "低电平"));
-    }
-
-    // 获取指定 GPIO 状态
-    Boolean value = readerClient.getGpio(0x03).await(1, TimeUnit.SECONDS);
-    System.out.print(String.format("GPIO%d : %s |\t", 0x03, value ? "高电平" : "低电平"));
+//    // 获取 GPIO状态
+//    Gpios _gpios = readerClient.getGpio().await(1, TimeUnit.SECONDS);
+//    for (Gpios.Gpio gpio : _gpios.gpios()) {
+//      System.out.println(String.format("GPIO%d : %s |\t", gpio.getIndex(), gpio.isHight() ? "高电平" : "低电平"));
+//    }
+//
+//    // 获取指定 GPIO 状态
+//    Boolean value = readerClient.getGpio(3).await(1, TimeUnit.SECONDS);
+//    System.out.print(String.format("GPIO%d : %s |\t", 0x03, value ? "高电平" : "低电平"));
   }
 
   /** 读写器 GPIO 输入设置/获取 */
@@ -206,7 +203,7 @@ public class ReaderClientTest {
     System.out.println("设置射频输出频率成功");
     // 查询射频跳频频段
     List<Integer> value = readerClient.getOutputFrequency().await(1, TimeUnit.SECONDS);
-    System.out.print("射频频点列表:");
+    System.out.println("射频频点列表:");
     for (Integer frequency : value) {
       System.out.println(String.format(" %d | ", frequency));
     }
@@ -290,29 +287,29 @@ public class ReaderClientTest {
   @Test
   public void singleRead() throws Exception {
     // 单次查询标签
-    Tag tag = readerClient.singleRead().await(3, TimeUnit.SECONDS);
-    System.out.println(String.format("ANT:%d RSSI:%f PC:%d ANT:%d", tag.getAnt(), tag.getRssi(), tag.getPc(), tag.getAnt()));
+    Tag tag = readerClient.singleRead().await(4, TimeUnit.SECONDS);
+    System.out.println(String.format("ANT:%d RSSI:%f PC:%d EPC:%s", tag.getAnt(), tag.getRssi(), tag.getPc(), tag.getEpc()));
   }
 
   /** 查询标签数据 */
   @Test
   public void readTagData() throws Exception {
     // 过滤数据
-    byte[] md = HexTools.hexStr2Byte("11223344");
+    byte[] md = HexTools.hexStr2Byte("300833B2DDD9014000000000");
     // 查询标签数据
     TagData tagData = readerClient.readTagData(
             // 访问密码
-            "11223344",
+            "00000000",
             // 过滤参数
-            FMB.TID,
+            FMB.EPC,
             // 过滤数据
             md,
             // 查询存储区
-            BankNo.EPC,
+            BankNo.TID,
             // 查询起始地址
             0x02,
             // 查询数据长度
-            0x03).await(1, TimeUnit.SECONDS);
+            0x03).await(4, TimeUnit.SECONDS);
     System.out.println(String.format("ANT:%d DATA:%s", tagData.getAnt(), HexTools.byteArrayToHexString(tagData.getData())));
   }
 
@@ -320,22 +317,22 @@ public class ReaderClientTest {
   @Test
   public void writeTagData() throws Exception {
     // 写入数据
-    byte[] data = HexTools.hexStr2Byte("0011223344556677");
+    byte[] data = HexTools.hexStr2Byte("11223344");
     // 写入标签数据
     TagData tagData = readerClient.writeTagData(
             // 标签的访问密码
-            "11223344",
+            "00000000",
             // 过滤数据类型
             FMB.EPC,
             // 过滤数据
-            null,
+            HexTools.hexStr2Byte("300833B2DDD9014000000000"),
             // 用户需要写入的数据的bank号
-            BankNo.EPC,
+            BankNo.USER,
             // 写入的数据的起始地址
             0x02,
             // 需写入的数据长度
             0x04,
-            data).await(1, TimeUnit.SECONDS);
+            data).await(4, TimeUnit.SECONDS);
     System.out.println(String.format("ANT:%d DATA:%s", tagData.getAnt(), HexTools.byteArrayToHexString(tagData.getData())));
   }
 
@@ -348,17 +345,17 @@ public class ReaderClientTest {
     param.setEPC(true);
     param.setUser(true);
     // 设置锁定类型
-    param.setLockType(LockType.LOCK);
+    param.setLockType(LockType.LOCK_FOREVER);
     // 锁定标签
     TagData tagData = readerClient.lockTag(
             // 标签的访问密码
-            "11223344",
+            "00000000",
             // 过滤数据类型
             FMB.EPC,
             // 过滤数据
-            HexTools.hexStr2Byte("112233445566"),
+            HexTools.hexStr2Byte("300833B2DDD9014000000001"),
             // 锁定参数
-            param).await(1,TimeUnit.SECONDS);
+            param).await(3,TimeUnit.SECONDS);
     System.out.println(String.format("ANT:%d DATA:%s", tagData.getAnt(), HexTools.byteArrayToHexString(tagData.getData())));
   }
 
@@ -368,11 +365,11 @@ public class ReaderClientTest {
     // 灭活Kill标签
     TagData tagData = readerClient.killTag(
             // 标签的杀死密码(当标签的KillPwd区的值为0x00000000时，标签会忽略kill命令，kill命令不会成功)
-            "44332211",
+            "00000000",
             // 过滤数据类型
             FMB.EPC,
             // 过滤数据
-            HexTools.hexStr2Byte("112233445566778899001122")).await(1,TimeUnit.SECONDS);
+            HexTools.hexStr2Byte("300833B2DDD9014000000001")).await(1,TimeUnit.SECONDS);
     System.out.println(String.format("ANT:%d DATA:%s", tagData.getAnt(), HexTools.byteArrayToHexString(tagData.getData())));
   }
 
@@ -456,11 +453,11 @@ public class ReaderClientTest {
     // 设置QT参数
     readerClient.setQtParam(
             // 标签的访问密码
-            "55555555",
+            "00000000",
             // 过滤数据类型
-            FMB.TID,
+            FMB.EPC,
             // 过滤数据
-            HexTools.hexStr2Byte("112233445566"),
+            HexTools.hexStr2Byte("300833B2DDD9014000000001"),
             // 是否启用近距离控制标志
             true,
             // 是否启用Private Memory Map
@@ -470,11 +467,11 @@ public class ReaderClientTest {
     // 获取QT参数
     QtParam qtParam = readerClient.getQtParam(
             // 标签的访问密码
-            "55555555",
+            "00000000",
             // 过滤数据类型
-            FMB.TID,
+            FMB.EPC,
             // 过滤数据
-            HexTools.hexStr2Byte("112233445566")).await(1,TimeUnit.SECONDS);
+            HexTools.hexStr2Byte("300833B2DDD9014000000001")).await(1,TimeUnit.SECONDS);
     System.out.println(String.format("获取的Qt参数为 \t%s |\t %s", qtParam.isCloseControl() ? "启用近距离控制" : "无近距离控制", qtParam.isEnabledPublicMemoryMap() ? "使用 Public Memory Map" : "启用 Private Memory Map"));
   }
 
@@ -484,11 +481,11 @@ public class ReaderClientTest {
     // 设置 QT 参数，启用近距离控制，标签使用 Private Memory Map。标签TID=0x112233445566778899001122，通过 TID 前 6 个字节过滤，AP=0x55555555
     readerClient.setQtOperation(
             // 标签的访问密码
-            "55555555",
+            "00000000",
             // 过滤数据类型
-            FMB.TID,
+            FMB.EPC,
             // 过滤数据
-            HexTools.hexStr2Byte("112233445566"),
+            HexTools.hexStr2Byte("300833B2DDD9014000000001"),
             // QT操作
             QtOperation.NONE,
             // 是否启用近距离控制标志
@@ -510,9 +507,9 @@ public class ReaderClientTest {
 
     // QT读操作
     QtOperation operation = readerClient.setQtOperation(
-            "55555555",
-            FMB.TID,
-            HexTools.hexStr2Byte("112233445566"),
+            "00000000",
+            FMB.EPC,
+            HexTools.hexStr2Byte("300833B2DDD9014000000001"),
             QtOperation.NONE,
             true,
             false,
@@ -532,11 +529,11 @@ public class ReaderClientTest {
     }
 
     // QT写操作
-    byte[] data = HexTools.hexStr2Byte("0011223344556677");
+    byte[] data = HexTools.hexStr2Byte("300833B2DDD9014000000000");
     readerClient.setQtOperation(
-            "55555555",
+            "00000000",
             FMB.TID,
-            HexTools.hexStr2Byte("112233445566"),
+            HexTools.hexStr2Byte("300833B2DDD9014000000001"),
             QtOperation.WRITE,
             true,
             false,
@@ -564,7 +561,8 @@ public class ReaderClientTest {
   @Test
   public void setBeep() throws Exception {
     // 开启蜂鸣器
-    Boolean result = readerClient.setBeep(true).await(1, TimeUnit.SECONDS);
+    Boolean result = readerClient.setBeep(false).await(1, TimeUnit.SECONDS);
+    // TODO 设置成功但 返回的值为 BB 2B 01 01 2D 0D 0A
     assert result;
     System.out.println("设置成功!");
   }
@@ -577,6 +575,7 @@ public class ReaderClientTest {
     assert result;
     System.out.println("设置成功!");
 
+    // TODO 文档CRC校验位有错误
     // 获取 读写器 工作模式
     WorkMode value = readerClient.getWorkMode().await(1, TimeUnit.SECONDS);
     System.out.println("获取工作模式成功,工作模式为" + value);
@@ -598,11 +597,11 @@ public class ReaderClientTest {
   @Test
   public void setHeartbeatParam() throws Exception {
     // 设置 HeartBeatTime 为6
-    Boolean result = readerClient.setHeartbeatParam(6).await(2, TimeUnit.SECONDS);
+    Boolean result = readerClient.setHeartbeatParam(6).await(1, TimeUnit.SECONDS);
     assert result;
     System.out.println("设置成功!");
     // 获取 HeartBeat 参数
-    Integer value = readerClient.getHeartbeatParam().await(2, TimeUnit.SECONDS);
+    Integer value = readerClient.getHeartbeatParam().await(1, TimeUnit.SECONDS);
     System.out.println(String.format("心跳包参数为:%d * 30s", value));
   }
 
@@ -624,21 +623,16 @@ public class ReaderClientTest {
     System.out.println("设置成功!");
   }
 
-  /** 设置读写器分支器间隔时间 */
-  @Test
-  public void setBranchAnts() throws Exception {
-    Boolean result = readerClient.setBranchAnts(1, 2).await(2, TimeUnit.SECONDS);
-    assert result;
-    System.out.println("设置成功!");
-  }
-
   /** 设置通道模式继电器工作时间 */
   @Test
   public void setRelayWorkTime() throws Exception {
-    //设置继电器工作时间100ms
+    // 设置通道模式继电器工作时间100ms
     Boolean result = readerClient.setRelayWorkTimeNew(1).await(2, TimeUnit.SECONDS);
     assert result;
     System.out.println("设置成功!");
+    // 获取通道模式继电器工作时间
+    Integer value = readerClient.getRelayWorkTimeNew().await(1, TimeUnit.SECONDS);
+    System.out.println(String.format("通道模式继电器工作时间为:%dms",value * 100));
   }
 
   /** 设置读写器触发工作时间 */
@@ -654,6 +648,7 @@ public class ReaderClientTest {
   @Test
   public void setReaderAlarmIntervalTime() throws Exception {
     // 设置报警间隔时间3s;
+    // TODO 文档CRC校验位有错误
     Boolean result = readerClient.setReaderAlarmIntervalTime(3).await(2, TimeUnit.SECONDS);
     assert result;
     System.out.println("设置成功!");
@@ -671,7 +666,7 @@ public class ReaderClientTest {
   /** 分支器循环工作功率 设置/获取 */
   @Test
   public void setBranchWorkPowers() throws Exception {
-    // 设置分支器循环工作功率
+    // 设置分支器循环工作功率 TODO 文档发送指令的长度有错误
     Boolean result = readerClient.setBranchWorkPowers(
             // Ant1 功率 0x10
             new BranchAntPowerParam(1, 0x10),
@@ -724,7 +719,7 @@ public class ReaderClientTest {
   @Test
   public void setAntWorkTimeFor16Channel() throws Exception {
     // 设置通道门延迟工作时间
-    readerClient.setAntWorkTimeFor16Channel(10).await(1, TimeUnit.SECONDS);
+    readerClient.setAntWorkTimeFor16Channel(1).await(1, TimeUnit.SECONDS);
     System.out.println("设置成功");
 
     // 获取通道门延迟工作时间
@@ -738,10 +733,7 @@ public class ReaderClientTest {
     // 设置16通道读写器工作天线
     readerClient.setAntsFor16Channel(
             new Ants()
-                    .add(1, false)
-                    .add(2, true)
-                    .add(3, true)
-                    .add(4, false)
+                    .add(1, true)
     ).await(1, TimeUnit.SECONDS);
     System.out.println("设置成功");
 

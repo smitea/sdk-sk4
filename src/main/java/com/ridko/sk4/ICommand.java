@@ -393,13 +393,6 @@ public interface ICommand {
   public Promise<Boolean> setBranchWorkIntervalTime(int intervalTime);
 
   /**
-   * 天线分支器工作天线设置
-   *
-   * @param ants 天线参数列表
-   */
-  public Promise<Boolean> setBranchAnts(int... ants);
-
-  /**
    * 设置当前分支器循环工作功率的大小
    * <p style="color:red">设置天线功率只适用设备连接分支器</p>
    *
@@ -415,22 +408,20 @@ public interface ICommand {
   public Promise<List<BranchAntPowerParam>> getBranchWorkPowers();
 
   /**
-   * 设置通道模式继电器工作时间
-   * <p>TIME1 和 TIME2: 继电器工作时间参数; 以 100ms 为单位，参数范围 100ms～256*100ms。（默认值 TIME 为 10）</p>
-   *
-   * @param relay1 继电器 1 工作时间
-   * @param relay2 继电器 2 工作时间
-   */
-  @Deprecated
-  public Promise<Boolean> setRelayWorkTime(int relay1, int relay2);
-
-  /**
    * 设置通道模式继电器工作时间(V2.0版本)
    * <p>继电器工作时间参数; 以100ms为单位，参数范围100ms～255*100ms。（默认值TIME为 10）</p>
    *
    * @param relay 继电器工作时间
    */
   public Promise<Boolean> setRelayWorkTimeNew(int relay);
+
+  /**
+   * 获取通道模式继电器工作时间(V2.0版本)
+   * <p>继电器工作时间参数; 以100ms为单位，参数范围100ms～255*100ms。（默认值TIME为 10）</p>
+   *
+   * @return 继电器工作时间参数
+   */
+  public Promise<Integer> getRelayWorkTimeNew();
 
   /**
    * 设置读写器触发工作时间

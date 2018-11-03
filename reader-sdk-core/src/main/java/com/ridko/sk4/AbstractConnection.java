@@ -257,7 +257,9 @@ abstract class AbstractConnection<Option extends SocketAddress> implements IRead
     }
 
     // 关闭线程
-    eventLoopGroup.shutdownGracefully();
+    if(eventLoopGroup!=null) {
+      eventLoopGroup.shutdownGracefully();
+    }
     bootstrap = null;
     eventLoopGroup = null;
     writeChannel = null;

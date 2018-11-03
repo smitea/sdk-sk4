@@ -460,7 +460,7 @@ public interface ICommand {
    * 设置通道门进出人数统计
    * @return 通道门进出人数记录统计
    */
-  public Promise<Boolean> setChannelDoorCountNUm(int inNum,int outNum);
+  public Promise<Boolean> setChannelDoorCountNUm(int inNum, int outNum);
 
   /**
    * 设置通道门延迟工作时间
@@ -505,12 +505,12 @@ public interface ICommand {
    * @param data 显示屏信息
    */
   @Deprecated
-  public Promise<Boolean> setDisplayData(int cNum,int pNum,byte[]... data);
+  public Promise<Boolean> setDisplayData(int cNum, int pNum, byte[]... data);
 
   /**
    * 设置屏待机
    * @param cNum 串口号
    * @param pNum 屏号
    */
-  public Promise<Boolean> setSleep(int cNum,int pNum);
+  public Promise<Boolean> setSleep(int cNum, int pNum);
 }

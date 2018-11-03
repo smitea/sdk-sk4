@@ -6,6 +6,7 @@
 
     <groupId>com.ridko</groupId>
     <artifactId>sdk-sk4</artifactId>
+    <packaging>pom</packaging>
     <version>1.2</version>
 
     <developers>
@@ -17,49 +18,14 @@
             <organizationUrl>http://www.ridkorfid.com/</organizationUrl>
         </developer>
     </developers>
+    <modules>
+        <module>reader-sdk-example-desktop</module>
+        <module>reader-sdk-core</module>
+    </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <netty.version>4.1.13.Final</netty.version>
-
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
-        <maven.compiler.compilerVersion>1.7</maven.compiler.compilerVersion>
     </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-            <version>${netty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.rxtx</groupId>
-            <artifactId>rxtx</artifactId>
-            <version>2.1.7</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>RELEASE</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.0.1</version>
-                <configuration>
-                    <aggregate>true</aggregate>
-                    <stylesheetfile>${project.basedir}/main.css</stylesheetfile>
-                    <reportOutputDirectory>${project.basedir}</reportOutputDirectory>
-                    <destDir>doc</destDir>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>

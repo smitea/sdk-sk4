@@ -58,7 +58,7 @@ public class ReaderClientTest {
     readerClient = serialConnection.connect(serialParam).await(3, TimeUnit.SECONDS);
   }
 
-  /** 连接串口 */
+  /** 连接TCP */
   private void connectTcp() throws Exception {
     // 创建TCP连接对象
     IReaderConnection<SocketAddress> tcpConnection = ReaderConnectionBuild.createTcpConnection();

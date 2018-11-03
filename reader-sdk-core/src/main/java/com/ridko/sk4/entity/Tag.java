@@ -17,6 +17,9 @@ public class Tag implements Serializable{
   /** EPC码 */
   private String epc;
 
+  public Tag() {
+  }
+
   public Tag(int pc, int ant, double rssi, String epc) {
     this.pc = pc;
     this.ant = ant;

@@ -1,0 +1,33 @@
+.bottom-label{
+    -fx-border-color: #000;
+    -fx-border-width: 0 1 0 0;
+}
+.bottom-panel{
+    -fx-border-color: #000;
+    -fx-border-width: 1 0 0 0;
+}
+
+.start-button{
+    -fx-background-repeat: stretch;
+    -fx-background-image: url('../images/loop.png');
+}
+.single-button{
+    -fx-background-repeat: stretch;
+    -fx-background-image: url('../images/single.png');
+}
+.break-button{
+    -fx-background-repeat: stretch;
+    -fx-background-image: url('../images/break.png');
+}
+.clear-button{
+    -fx-background-repeat: stretch;
+    -fx-background-image: url('../images/clear.png');
+}
+.filter-button{
+    -fx-background-repeat: stretch;
+    -fx-background-image: url('../images/filter.png');
+}
+.option-button{
+    -fx-background-repeat: stretch;
+    -fx-background-image: url('../images/option.png');
+}

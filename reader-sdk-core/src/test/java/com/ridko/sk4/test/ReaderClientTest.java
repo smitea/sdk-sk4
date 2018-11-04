@@ -172,15 +172,15 @@ public class ReaderClientTest {
     readerClient.setGpio(gpios).await(1, TimeUnit.SECONDS);
     System.out.println("GPIO设置成功");
 
-//    // 获取 GPIO状态
-//    Gpios _gpios = readerClient.getGpio().await(1, TimeUnit.SECONDS);
-//    for (Gpios.Gpio gpio : _gpios.gpios()) {
-//      System.out.println(String.format("GPIO%d : %s |\t", gpio.getIndex(), gpio.isHight() ? "高电平" : "低电平"));
-//    }
-//
-//    // 获取指定 GPIO 状态
-//    Boolean value = readerClient.getGpio(3).await(1, TimeUnit.SECONDS);
-//    System.out.print(String.format("GPIO%d : %s |\t", 0x03, value ? "高电平" : "低电平"));
+    // 获取 GPIO状态
+    Gpios _gpios = readerClient.getGpio().await(1, TimeUnit.SECONDS);
+    for (Gpios.Gpio gpio : _gpios.gpios()) {
+      System.out.println(String.format("GPIO%d : %s |\t", gpio.getIndex(), gpio.isHight() ? "高电平" : "低电平"));
+    }
+
+    // 获取指定 GPIO 状态
+    Boolean value = readerClient.getGpio(3).await(1, TimeUnit.SECONDS);
+    System.out.print(String.format("GPIO%d : %s |\t", 0x03, value ? "高电平" : "低电平"));
   }
 
   /** 读写器 GPIO 输入设置/获取 */

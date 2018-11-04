@@ -11,6 +11,7 @@ public class LibTools {
   private static final String[] WIN_86_PATH = new String[]{"win-x86/rxtxParallel.dll", "win-x86/rxtxSerial.dll"};
   private static final String[] LINUX_86_64_PATH = new String[]{"linux-x86_64/rxtxParallel.dll", "linux-x86_64/rxtxSerial.dll"};
   private static final String[] LINUX_I386_PATH = new String[]{"linux-i386/rxtxParallel.dll", "linux-i386/rxtxSerial.dll"};
+  private static final String[] MACOS_PATH = new String[]{"mac-os/librxtxSerial.jnilib"};
 
   public static void load() throws RuntimeException {
     String arch = System.getProperty("os.arch");

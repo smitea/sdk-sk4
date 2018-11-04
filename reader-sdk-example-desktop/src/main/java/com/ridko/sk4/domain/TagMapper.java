@@ -3,36 +3,27 @@ package com.ridko.sk4.domain;
 import javafx.beans.property.*;
 
 /**
+ * 标签信息记录
  * @author smitea
  * @since 2018-11-03
  */
 public class TagMapper {
+  /** 序号 */
   private IntegerProperty num = new SimpleIntegerProperty();
+  /** 计数 */
   private IntegerProperty count = new SimpleIntegerProperty();
+  /** 记录时间 */
   private StringProperty time = new SimpleStringProperty();
+  /** 天线号 */
   private IntegerProperty ant = new SimpleIntegerProperty();
+  /** EPC码 */
   private StringProperty epc = new SimpleStringProperty();
+  /** PC */
   private IntegerProperty pc = new SimpleIntegerProperty();
+  /** 场强值 */
   private DoubleProperty rssi = new SimpleDoubleProperty();
 
   public TagMapper() {
-  }
-
-  public TagMapper(IntegerProperty ant, StringProperty epc, IntegerProperty pc, DoubleProperty rssi) {
-    this.ant = ant;
-    this.epc = epc;
-    this.pc = pc;
-    this.rssi = rssi;
-  }
-
-  public TagMapper(IntegerProperty num, IntegerProperty count, StringProperty time, IntegerProperty ant, StringProperty epc, IntegerProperty pc, DoubleProperty rssi) {
-    this.num = num;
-    this.count = count;
-    this.time = time;
-    this.ant = ant;
-    this.epc = epc;
-    this.pc = pc;
-    this.rssi = rssi;
   }
 
   public int getNum() {

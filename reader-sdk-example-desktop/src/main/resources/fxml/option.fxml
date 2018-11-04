@@ -15,15 +15,14 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-
-<AnchorPane prefHeight="400.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ridko.sk4.controller.OptionController">
+<AnchorPane prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ridko.sk4.controller.OptionController">
    <children>
       <VBox layoutX="160.0" layoutY="85.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
             <HBox alignment="CENTER_LEFT">
                <children>
                   <Label text="Tag(TID/EPC):" />
-                  <TextField promptText="请输入过滤数据">
+                  <TextField fx:id="filter_data_text" promptText="请输入过滤数据">
                      <HBox.margin>
                         <Insets left="10.0" />
                      </HBox.margin>
@@ -33,7 +32,7 @@
                         <Insets left="10.0" />
                      </HBox.margin>
                   </Label>
-                  <TextField promptText="请输入标签密码">
+                  <TextField fx:id="fliter_tag_password_text" promptText="请输入标签密码" text="00000000">
                      <HBox.margin>
                         <Insets left="10.0" />
                      </HBox.margin>
@@ -43,7 +42,7 @@
                   <Insets bottom="10.0" left="20.0" right="10.0" top="10.0" />
                </VBox.margin>
             </HBox>
-            <TitledPane animated="false" minHeight="150.0" text="标签读写操作">
+            <TitledPane animated="false" collapsible="false" minHeight="150.0" text="标签读写操作">
               <content>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="598.0">
                      <children>
@@ -61,21 +60,30 @@
                           </columnConstraints>
                           <rowConstraints>
                             <RowConstraints vgrow="SOMETIMES" />
-                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                            <RowConstraints vgrow="SOMETIMES" />
                           </rowConstraints>
                            <children>
                               <Label text="bank号：" />
-                              <Label text="写入数据：" GridPane.rowIndex="1" GridPane.valignment="TOP" />
-                              <ComboBox GridPane.columnIndex="1" />
+                              <Label text="写入数据：" GridPane.rowIndex="1" GridPane.valignment="TOP">
+                                 <GridPane.margin>
+                                    <Insets top="5.0" />
+                                 </GridPane.margin></Label>
+                              <ComboBox fx:id="tag_bank_no_combox" GridPane.columnIndex="1" />
                               <Label text="起始地址：" GridPane.columnIndex="2" />
-                              <TextField prefWidth="20.0" GridPane.columnIndex="3" />
+                              <TextField fx:id="tag_start_adr_text" prefWidth="20.0" text="02" GridPane.columnIndex="3" />
                               <Label text="数据长度：" GridPane.columnIndex="4" />
-                              <TextField prefWidth="20.0" GridPane.columnIndex="5" />
+                              <TextField fx:id="tag_data_length_text" prefWidth="20.0" text="04" GridPane.columnIndex="5" />
                               <Label text="过滤数据类型：" GridPane.columnIndex="6" />
-                              <ComboBox GridPane.columnIndex="7" />
-                              <Button mnemonicParsing="false" text="读取" GridPane.columnIndex="8" />
-                              <Button mnemonicParsing="false" text="写入" GridPane.columnIndex="8" GridPane.rowIndex="1" GridPane.valignment="TOP" />
-                              <TextArea prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.columnSpan="7" GridPane.rowIndex="1" />
+                              <ComboBox fx:id="tag_filter_type_combox" GridPane.columnIndex="7" />
+                              <Button fx:id="tag_read_button" mnemonicParsing="false" text="读取" GridPane.columnIndex="8" />
+                              <Button fx:id="tag_write_button" mnemonicParsing="false" text="写入" GridPane.columnIndex="8" GridPane.rowIndex="1" GridPane.valignment="TOP">
+                                 <GridPane.margin>
+                                    <Insets top="5.0" />
+                                 </GridPane.margin></Button>
+                              <TextArea fx:id="tag_write_data_text" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.columnSpan="7" GridPane.rowIndex="1">
+                                 <GridPane.margin>
+                                    <Insets top="5.0" />
+                                 </GridPane.margin></TextArea>
                            </children>
                         </GridPane>
                      </children>
@@ -92,7 +100,7 @@
                 <RowConstraints vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
-                  <TitledPane animated="false" text="Qt操作">
+                  <TitledPane animated="false" collapsible="false" text="Qt参数">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -107,17 +115,17 @@
                                   <RowConstraints valignment="CENTER" vgrow="SOMETIMES" />
                                 </rowConstraints>
                                  <children>
-                                    <CheckBox mnemonicParsing="false" text="启用近距离控制标志" />
-                                    <CheckBox mnemonicParsing="false" text="使用 Public Memory Map" GridPane.rowIndex="1" />
-                                    <Button mnemonicParsing="false" text="设置" GridPane.columnIndex="1" />
-                                    <Button mnemonicParsing="false" text="获取" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    <CheckBox fx:id="qt_control_enabled_checkbox" mnemonicParsing="false" text="启用近距离控制标志" />
+                                    <CheckBox fx:id="qt_public_memory_map_checkbox" mnemonicParsing="false" text="使用 Public Memory Map" GridPane.rowIndex="1" />
+                                    <Button fx:id="qt_setting_button" mnemonicParsing="false" text="设置" GridPane.columnIndex="1" />
+                                    <Button fx:id="qt_get_button" mnemonicParsing="false" text="获取" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                                  </children>
                               </GridPane>
                            </children>
                         </AnchorPane>
                     </content>
                   </TitledPane>
-                  <TitledPane animated="false" text="Qt参数" GridPane.columnIndex="1">
+                  <TitledPane animated="false" collapsible="false" text="Qt操作" GridPane.columnIndex="1">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -130,15 +138,15 @@
                                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                 </rowConstraints>
                                  <children>
-                                    <Button mnemonicParsing="false" text="读操作" />
-                                    <Button mnemonicParsing="false" text="写操作" GridPane.columnIndex="1" />
+                                    <Button fx:id="qt_op_read_button" mnemonicParsing="false" text="读操作" />
+                                    <Button fx:id="qt_op_write_button" mnemonicParsing="false" text="写操作" GridPane.columnIndex="1" />
                                  </children>
                               </GridPane>
                            </children>
                         </AnchorPane>
                     </content>
                   </TitledPane>
-                  <TitledPane animated="false" text="Lock" GridPane.rowIndex="1">
+                  <TitledPane animated="false" collapsible="false" text="Lock" GridPane.rowIndex="1">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -157,21 +165,21 @@
                                 </rowConstraints>
                                  <children>
                                     <Label text="锁定存储区：" />
-                                    <CheckBox mnemonicParsing="false" text="Kill PWD" GridPane.columnIndex="1" />
-                                    <CheckBox mnemonicParsing="false" text="Access PWD" GridPane.columnIndex="2" />
-                                    <CheckBox mnemonicParsing="false" text="EPC" GridPane.columnIndex="3" />
-                                    <CheckBox mnemonicParsing="false" text="TID" GridPane.columnIndex="4" />
-                                    <CheckBox mnemonicParsing="false" text="USER" GridPane.columnIndex="5" />
-                                    <Button mnemonicParsing="false" prefHeight="23.0" prefWidth="55.0" text="锁定" GridPane.columnIndex="5" GridPane.rowIndex="1" />
+                                    <CheckBox fx:id="lock_killl_pwd_checkbox" mnemonicParsing="false" text="Kill PWD" GridPane.columnIndex="1" />
+                                    <CheckBox fx:id="lock_access_pwd_checkbox" mnemonicParsing="false" text="Access PWD" GridPane.columnIndex="2" />
+                                    <CheckBox fx:id="lock_epc_checkbox" mnemonicParsing="false" text="EPC" GridPane.columnIndex="3" />
+                                    <CheckBox fx:id="lock_tid_checkbox" mnemonicParsing="false" text="TID" GridPane.columnIndex="4" />
+                                    <CheckBox fx:id="lock_user_checkbox" mnemonicParsing="false" text="USER" GridPane.columnIndex="5" />
+                                    <Button fx:id="lock_button" mnemonicParsing="false" prefHeight="23.0" prefWidth="55.0" text="锁定" GridPane.columnIndex="5" GridPane.rowIndex="1" />
                                     <Label text="锁定类型:" GridPane.rowIndex="1" />
-                                    <ComboBox prefWidth="150.0" GridPane.columnIndex="2" GridPane.columnSpan="4" GridPane.rowIndex="1" />
+                                    <ComboBox fx:id="lock_type_combox" prefWidth="150.0" GridPane.columnIndex="2" GridPane.columnSpan="4" GridPane.rowIndex="1" />
                                  </children>
                               </GridPane>
                            </children>
                         </AnchorPane>
                     </content>
                   </TitledPane>
-                  <TitledPane animated="false" text="Kill" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                  <TitledPane animated="false" collapsible="false" text="Kill" GridPane.columnIndex="1" GridPane.rowIndex="1">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -183,14 +191,14 @@
                                 </columnConstraints>
                                 <rowConstraints>
                                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints vgrow="SOMETIMES" />
                                 </rowConstraints>
                                  <children>
                                     <Label text="Kill PWD:" />
-                                    <TextField prefHeight="23.0" prefWidth="117.0" GridPane.columnIndex="1" />
-                                    <Button mnemonicParsing="false" text="Kill" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                    <TextField fx:id="kill_text" prefHeight="23.0" prefWidth="117.0" GridPane.columnIndex="1" />
+                                    <Button fx:id="kill_button" mnemonicParsing="false" text="Kill" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                        <GridPane.margin>
-                                          <Insets />
+                                          <Insets top="5.0" />
                                        </GridPane.margin>
                                     </Button>
                                  </children>

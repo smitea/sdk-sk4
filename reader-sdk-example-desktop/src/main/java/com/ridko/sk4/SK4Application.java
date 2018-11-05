@@ -1,22 +1,15 @@
 package com.ridko.sk4;
 
 import com.ridko.sk4.common.Dialogs;
-import com.ridko.sk4.common.LibTools;
 import com.ridko.sk4.common.ViewLoads;
 import com.ridko.sk4.controller.ConnectionController;
 import com.ridko.sk4.controller.MainController;
 import com.ridko.sk4.controller.OptionController;
 import com.ridko.sk4.controller.SettingController;
-import com.ridko.sk4.listenter.ConnectEvent;
-import com.ridko.sk4.listenter.ErrorEvent;
-import com.ridko.sk4.listenter.IListenter;
 import javafx.application.Application;
-import javafx.event.Event;
 import javafx.scene.Scene;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.net.URL;
 
 /**
@@ -30,7 +23,7 @@ public class SK4Application extends Application {
   private final URL MAIN_PATH = this.getClass().getResource("/fxml/main.fxml");
   private final URL CONNECTION_PATH = this.getClass().getResource("/fxml/connection.fxml");
   private final URL OPTION_PATH = this.getClass().getResource("/fxml/option.fxml");
-  private final URL SETTIN_PATH = this.getClass().getResource("/fxml/setting.fxml");
+  private final URL SETTING_PATH = this.getClass().getResource("/fxml/setting.fxml");
 
   private final static double INIT_WIDTH = 1000;
   private final static double INIT_HEIGHT = 600;
@@ -43,16 +36,23 @@ public class SK4Application extends Application {
   @Override
   public void start(Stage primaryStage) throws Exception {
     try {
+      // 设置 指令 调试打印输出
+      System.setProperty("sk4.debug", "true");
+
+      // 加载驱动(动态库文件在调试时放置在项目根目录，打包发布后动态库文件放置在程序根目录)
+      System.loadLibrary("rxtxParallel");
+      System.loadLibrary("rxtxSerial");
 
       // 加载资源文件
       mainUI = ViewLoads.load(MAIN_PATH);
       connectionUI = ViewLoads.load(CONNECTION_PATH);
       optionUI = ViewLoads.load(OPTION_PATH);
-      settingUI = ViewLoads.load(SETTIN_PATH);
+      settingUI = ViewLoads.load(SETTING_PATH);
 
       // 创建主页面
       createMain(primaryStage);
-    } catch (IOException e) {
+    } catch (Exception e) {
+      e.printStackTrace();
       Dialogs.alertError("系统错误", "系统文件缺失");
     }
   }

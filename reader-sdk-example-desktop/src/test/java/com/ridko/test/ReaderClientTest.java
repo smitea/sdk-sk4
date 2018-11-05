@@ -1,6 +1,9 @@
-package com.ridko.sk4.test;
+package com.ridko.test;
 
-import com.ridko.sk4.*;
+import com.ridko.sk4.ICommand;
+import com.ridko.sk4.IReaderConnection;
+import com.ridko.sk4.ReaderConnectionBuild;
+import com.ridko.sk4.SerialParam;
 import com.ridko.sk4.common.HexTools;
 import com.ridko.sk4.entity.*;
 import com.ridko.sk4.listenter.ConnectEvent;
@@ -38,10 +41,10 @@ public class ReaderClientTest {
     connectTcp();
 
     // 设置串口连接
-    // connectSerial();
+//    connectSerial();
   }
 
-  /** 连接串口 */
+  /** 连接串口(连接串口之前需要配置 Rxtx 驱动环境) */
   private void connectSerial() throws Exception {
     // 设置串口参数
     SerialParam serialParam = new SerialParam("COM5");
@@ -187,7 +190,7 @@ public class ReaderClientTest {
   @Test
   public void getInputGpio() throws Exception {
     // 获取 GPIO3 的输入状态(等待1s)
-    Gpios result = readerClient.getInputGpio(3).await(1, TimeUnit.SECONDS);
+    Gpios result = readerClient.getInputGpio(1, 2, 3, 4, 5, 6, 7, 8).await(1, TimeUnit.SECONDS);
     System.out.println("GPIOs:");
     for (Gpios.Gpio gpio : result.gpios()) {
       System.out.println(String.format("GPIO%d : %s |\t", gpio.getIndex(), gpio.isHight() ? "高电平" : "低电平"));
@@ -355,7 +358,7 @@ public class ReaderClientTest {
             // 过滤数据
             HexTools.hexStr2Byte("300833B2DDD9014000000001"),
             // 锁定参数
-            param).await(3,TimeUnit.SECONDS);
+            param).await(3, TimeUnit.SECONDS);
     System.out.println(String.format("ANT:%d DATA:%s", tagData.getAnt(), HexTools.byteArrayToHexString(tagData.getData())));
   }
 
@@ -369,7 +372,7 @@ public class ReaderClientTest {
             // 过滤数据类型
             FMB.EPC,
             // 过滤数据
-            HexTools.hexStr2Byte("300833B2DDD9014000000001")).await(1,TimeUnit.SECONDS);
+            HexTools.hexStr2Byte("300833B2DDD9014000000001")).await(1, TimeUnit.SECONDS);
     System.out.println(String.format("ANT:%d DATA:%s", tagData.getAnt(), HexTools.byteArrayToHexString(tagData.getData())));
   }
 
@@ -381,11 +384,11 @@ public class ReaderClientTest {
             // 循环查询标签周期工作时间
             100,
             // 间断时间
-            100).await(1,TimeUnit.SECONDS);
+            100).await(1, TimeUnit.SECONDS);
     System.out.println("设置成功");
 
     // 获取天线循环工作时间和间隔时间
-    CyclicQueryWorkAndResponseTime cyclicQueryWorkAndResponseTime = readerClient.getCyclicQueryWorkAndResponseTime().await(1,TimeUnit.SECONDS);
+    CyclicQueryWorkAndResponseTime cyclicQueryWorkAndResponseTime = readerClient.getCyclicQueryWorkAndResponseTime().await(1, TimeUnit.SECONDS);
     System.out.println(String.format("循环查询标签工作时间%d | 间断时间设置响应%d",
             cyclicQueryWorkAndResponseTime.getWorkTime(),
             cyclicQueryWorkAndResponseTime.getInterruptedTime()));
@@ -443,7 +446,7 @@ public class ReaderClientTest {
   @Test
   public void setAutoReadWhenPowerOff() throws Exception {
     // 设置开机自动读取
-    Boolean await = readerClient.setAutoReadWhenPowerOff(true).await(1,TimeUnit.SECONDS);
+    Boolean await = readerClient.setAutoReadWhenPowerOff(true).await(1, TimeUnit.SECONDS);
     System.out.println(String.format("开机自动读取标志为: %s", await ? "auto" : "non"));
   }
 
@@ -471,7 +474,7 @@ public class ReaderClientTest {
             // 过滤数据类型
             FMB.EPC,
             // 过滤数据
-            HexTools.hexStr2Byte("300833B2DDD9014000000001")).await(1,TimeUnit.SECONDS);
+            HexTools.hexStr2Byte("300833B2DDD9014000000001")).await(1, TimeUnit.SECONDS);
     System.out.println(String.format("获取的Qt参数为 \t%s |\t %s", qtParam.isCloseControl() ? "启用近距离控制" : "无近距离控制", qtParam.isEnabledPublicMemoryMap() ? "使用 Public Memory Map" : "启用 Private Memory Map"));
   }
 
@@ -632,7 +635,7 @@ public class ReaderClientTest {
     System.out.println("设置成功!");
     // 获取通道模式继电器工作时间
     Integer value = readerClient.getRelayWorkTimeNew().await(1, TimeUnit.SECONDS);
-    System.out.println(String.format("通道模式继电器工作时间为:%dms",value * 100));
+    System.out.println(String.format("通道模式继电器工作时间为:%dms", value * 100));
   }
 
   /** 设置读写器触发工作时间 */

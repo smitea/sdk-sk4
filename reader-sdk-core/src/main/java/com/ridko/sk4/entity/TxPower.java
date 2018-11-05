@@ -11,7 +11,7 @@ import java.io.Serializable;
  */
 public class TxPower implements Serializable {
   /** 开环状态 true 开环| false 闭环 */
-  private boolean isLoop = false;
+  private boolean isLoop = true;
   /** 读功率 */
   private int readPower;
   /** 写功率 */

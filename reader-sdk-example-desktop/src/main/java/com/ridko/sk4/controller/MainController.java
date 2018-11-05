@@ -31,6 +31,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
@@ -142,6 +143,7 @@ public class MainController implements IMessageCallback {
      * 时间列
      */
     public TableColumn<TagMapper, String> time_column;
+    public TableColumn<TagMapper, Double> rssi_column;
 
     /**
      * 循环查询标签时间
@@ -199,17 +201,10 @@ public class MainController implements IMessageCallback {
     public Button power_setting_button;
 
     /**
-     * 启用蜂鸣器单选框
-     */
-    public RadioButton beep_radio_enabled;
-    /**
-     * 禁用蜂鸣器单选框
-     */
-    public RadioButton beep_radio_disabled;
-    /**
      * 设置蜂鸣器按钮
      */
     public Button beep_setting_button;
+    public CheckBox beep_checkbox;
 
     /**
      * 连接动画时间对象
@@ -328,10 +323,56 @@ public class MainController implements IMessageCallback {
      */
     private final ObservableList<TagMapper> tagMappers = FXCollections.observableArrayList();
 
+    /**
+     * 标签信息回调监听器
+     */
+    private final ITagListenter tagListenter = tag -> ThreadExcutorUntils.submit(() -> Platform.runLater(() -> {
+        // 累计标签数量
+        tagCount.setValue(tagCount.getValue()+1);
+
+        // 获取当前时间
+        String format = dateFormat.format(new Date());
+
+        // 判断EPC是否存在
+        Optional<TagMapper> first = tagMappers
+                .stream()
+                .filter(_tag -> StringUtils.equals(_tag.getEpc(), tag.getEpc()))
+                .findFirst();
+
+        if (first.isPresent()) {
+            // 修改EPC信息
+            TagMapper value = first.get();
+            value.setAnt(tag.getAnt());
+            value.setPc(tag.getPc());
+            value.setRssi(tag.getRssi());
+
+            value.setTime(format);
+            value.setCount(value.getCount() + 1);
+        } else {
+            // 计算序号
+            tagNum.setValue(tagNum.get() + 1);
+
+            // 添加EPC信息
+            TagMapper mapper = new TagMapper();
+            mapper.setRssi(tag.getRssi());
+            mapper.setAnt(tag.getAnt());
+            mapper.setPc(tag.getPc());
+            mapper.setEpc(tag.getEpc());
+
+            mapper.setCount(1);
+            mapper.setNum(tagNum.get());
+            mapper.setTime(format);
+
+            tagMappers.add(mapper);
+        }
+    }));
+
     public void initialize() {
 
         // 创建定时任务线程池
         timer = new Timer(1000, (actionEvent) -> Platform.runLater(() -> {
+            tag_rate_label.setText(String.format("%d",tagCount.getValue()));
+
             // 标签总数置零
             tagCount.setValue(0);
             // 时间累加
@@ -340,9 +381,7 @@ public class MainController implements IMessageCallback {
 
         // 时间更新定时器
         dateUpdateTimer = new Timer(1000, event -> {
-            Platform.runLater(() -> {
-                time_label.textProperty().setValue(dateFormat.format(new Date()));
-            });
+            Platform.runLater(() -> time_label.textProperty().setValue(dateFormat.format(new Date())));
         });
         dateUpdateTimer.start();
 
@@ -367,72 +406,35 @@ public class MainController implements IMessageCallback {
         connection.setErrorEventIListenter(errorEvent -> this.notify(errorEvent.getMsg(), "red"));
 
         // 添加标签数据
-        connection.setTagListenter(tag -> ThreadExcutorUntils.submit(() -> {
-            Platform.runLater(() -> {
-                // 累计标签数量
-                tagCount.setValue(1);
-
-                // 获取当前时间
-                String format = dateFormat.format(new Date());
-
-                // 判断EPC是否存在
-                Optional<TagMapper> first = tagMappers
-                        .stream()
-                        .filter(_tag -> StringUtils.equals(_tag.getEpc(), tag.getEpc()))
-                        .findFirst();
-
-                if (first.isPresent()) {
-                    // 修改EPC信息
-                    TagMapper value = first.get();
-                    value.setAnt(tag.getAnt());
-                    value.setPc(tag.getPc());
-                    value.setRssi(tag.getRssi());
-
-                    value.setTime(format);
-                    value.setCount(value.getCount() + 1);
-                } else {
-                    // 计算序号
-                    tagNum.setValue(tagNum.get() + 1);
-
-                    // 添加EPC信息
-                    TagMapper mapper = new TagMapper();
-                    mapper.setRssi(tag.getRssi());
-                    mapper.setAnt(tag.getAnt());
-                    mapper.setPc(tag.getPc());
-                    mapper.setEpc(tag.getEpc());
-
-                    mapper.setCount(1);
-                    mapper.setNum(tagNum.get());
-                    mapper.setTime(format);
-
-                    tagMappers.add(mapper);
-                }
-            });
-
-        }));
+        connection.setTagListenter(tagListenter);
     }
 
     private void bindTable() {
         num_column.setCellValueFactory(new PropertyValueFactory<>("num"));
         ant_column.setCellValueFactory(new PropertyValueFactory<>("ant"));
         epc_column.setCellValueFactory(new PropertyValueFactory<>("epc"));
+        rssi_column.setCellValueFactory(new PropertyValueFactory<>("rssi"));
         pc_column.setCellValueFactory(new PropertyValueFactory<>("pc"));
         count_column.setCellValueFactory(new PropertyValueFactory<>("count"));
         time_column.setCellValueFactory(new PropertyValueFactory<>("time"));
         tag_table.setItems(tagMappers);
 
         // 表格选中事件监听
-        tag_table.selectionModelProperty().addListener((observable, oldValue, newValue) -> {
-            TagMapper item = newValue.getSelectedItem();
-            Platform.runLater(()->{
-                // 弹出标签信息框
-                futureConnection.stop();
-                timer.stop();
+        tag_table.setOnMouseClicked(event -> {
+            if(event.getClickCount() == 2){
+                Platform.runLater(()->{
+                    TagMapper selectedItem = tag_table.getSelectionModel().getSelectedItem();
+                    if(selectedItem!=null) {
+                        // 弹出标签信息框
+                        futureConnection.stop();
+                        timer.stop();
 
-                optionUI.getController().setFilterData(item.getEpc());
-                optionStage.showAndWait();
-                resumeScan();
-            });
+                        optionUI.getController().setFilterData(selectedItem.getEpc());
+                        optionStage.setOnCloseRequest(event1 -> resumeScan());
+                        optionStage.showAndWait();
+                    }
+                });
+            }
         });
     }
 
@@ -446,7 +448,7 @@ public class MainController implements IMessageCallback {
                 clearData();
                 futureConnection.start();
                 timer.start();
-                // 每秒计算一次速度
+                futureConnection.setTagListenter(tagListenter);
                 start_button.setText("停止扫描");
             } else {
                 futureConnection.stop();
@@ -484,15 +486,17 @@ public class MainController implements IMessageCallback {
         setting_btn.setOnAction(event -> {
             futureConnection.stop();
             timer.stop();
+            settingStage.setOnCloseRequest(event1 -> {
+                resumeScan();
+            });
             settingStage.showAndWait();
-            resumeScan();
         });
         // 标签设置
         tagdata_button.setOnAction(event -> {
             futureConnection.stop();
             timer.stop();
+            optionStage.setOnCloseRequest(event1 -> resumeScan());
             optionStage.showAndWait();
-            resumeScan();
         });
 
         // 单次扫描
@@ -515,7 +519,11 @@ public class MainController implements IMessageCallback {
                         mapper.setNum(tagNum.get());
                         String format = dateFormat.format(new Date());
                         mapper.setTime(format);
-                        tagMappers.add(mapper);
+                        synchronized (tagMappers) {
+                            tagMappers.clear();
+                            tagMappers.add(mapper);
+                        }
+                        MainController.this.notify("单次扫描执行成功", "green");
                     }
 
                     @Override
@@ -539,7 +547,15 @@ public class MainController implements IMessageCallback {
             resumeScan();
         });
         // 清除数据
-        clear_button.setOnAction(event -> clearData());
+        clear_button.setOnAction(event -> {
+            tagCount.setValue(0);
+            tagTime.setValue(0);
+            tagNum.setValue(0);
+
+            synchronized (tagMappers) {
+                tagMappers.clear();
+            }
+        });
 
         // 获取天线
         ant_getting_button.setOnAction(event -> {
@@ -563,7 +579,7 @@ public class MainController implements IMessageCallback {
                                 ant4_checkbox.setSelected(true);
                             }
                         }
-                        MainController.this.notify("获取天线成功", "red");
+                        MainController.this.notify("获取天线成功", "green");
                     });
                 }
 
@@ -641,6 +657,7 @@ public class MainController implements IMessageCallback {
 
                 @Override
                 public void onFailure(Throwable value) {
+                    value.fillInStackTrace();
                     MainController.this.notify("设置功率失败", "red");
                 }
             });
@@ -653,7 +670,7 @@ public class MainController implements IMessageCallback {
             timer.stop();
             start_button.setText("开始扫描");
 
-            readerClient.setBeep(beep_radio_enabled.isSelected()).then(new Callback<Boolean>() {
+            readerClient.setBeep(beep_checkbox.isSelected()).then(new Callback<Boolean>() {
                 @Override
                 public void onSuccess(Boolean value) {
                     MainController.this.notify("设置蜂鸣器成功", "green");
@@ -661,6 +678,7 @@ public class MainController implements IMessageCallback {
 
                 @Override
                 public void onFailure(Throwable value) {
+                    value.fillInStackTrace();
                     MainController.this.notify("设置蜂鸣器失败", "red");
                 }
             });
@@ -729,7 +747,7 @@ public class MainController implements IMessageCallback {
             }
         };
         tag_count_label.textProperty().bindBidirectional(tagNum, stringConverter);
-        tag_rate_label.textProperty().bindBidirectional(tagCount, stringConverter);
+//        tag_rate_label.textProperty().bindBidirectional(tagCount, stringConverter);
         tag_time_label.textProperty().bindBidirectional(tagTime, stringConverter);
     }
 
@@ -815,16 +833,21 @@ public class MainController implements IMessageCallback {
         tagTime.setValue(0);
         tagNum.setValue(0);
 
-        tagMappers.clear();
+        synchronized (tagMappers) {
+            tagMappers.clear();
+        }
+        futureConnection.setTagListenter(null);
     }
 
     private void resumeScan() {
         if (StringUtils.equals("开始扫描", start_button.getText())) {
             futureConnection.stop();
             timer.stop();
+            futureConnection.setTagListenter(null);
         } else {
             futureConnection.start();
             timer.start();
+            futureConnection.setTagListenter(tagListenter);
         }
     }
 

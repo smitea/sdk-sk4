@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ridko.sk4.controller.SettingController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ridko.sk4.controller.SettingController">
    <center>
       <GridPane BorderPane.alignment="CENTER">
         <columnConstraints>
@@ -53,7 +53,7 @@
                                     <CheckBox fx:id="gpio_3_checkbox" mnemonicParsing="false" text="GPIO3" GridPane.columnIndex="2" />
                                     <CheckBox fx:id="gpio_7_checkbox" mnemonicParsing="false" text="GPIO7" GridPane.rowIndex="2" />
                                     <CheckBox fx:id="gpio_8_checkbox" mnemonicParsing="false" text="GPIO8" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                                    <Button fx:id="gpio_input_get_button" mnemonicParsing="false" text="获取GPIO输入" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                                    <Button fx:id="gpio_input_get_button" disable="true" mnemonicParsing="false" text="获取GPIO输入" GridPane.columnIndex="2" GridPane.rowIndex="2" />
                                     <Button fx:id="gpio_output_button" mnemonicParsing="false" text="获取GPIO输出" GridPane.columnIndex="2" GridPane.rowIndex="3" />
                                     <Button fx:id="gpio_ouput_set_button" mnemonicParsing="false" text="设置GPIO输出" GridPane.columnSpan="2" GridPane.rowIndex="3" />
                                  </children>
@@ -118,9 +118,9 @@
                                           <Insets right="10.0" />
                                        </GridPane.margin>
                                     </Label>
-                                    <TextField fx:id="gen_startq_text" promptText="4" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                                    <TextField fx:id="gen_minq_text" promptText="0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                                    <TextField fx:id="gen_maxq_text" promptText="15" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                    <TextField fx:id="gen_startq_text" promptText="4" text="4" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    <TextField fx:id="gen_minq_text" promptText="0" text="0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                    <TextField fx:id="gen_maxq_text" promptText="15" text="15" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                                     <Label text="session" GridPane.rowIndex="5">
                                        <GridPane.margin>
                                           <Insets right="10.0" />
@@ -187,7 +187,7 @@
                                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                 </rowConstraints>
                                  <children>
-                                    <TextField fx:id="ant_work_ant1_text" promptText="100" GridPane.columnIndex="1" />
+                                    <TextField fx:id="ant_work_ant1_text" promptText="100" text="100" GridPane.columnIndex="1" />
                                     <Label text="天线 1 的工作时间">
                                        <GridPane.margin>
                                           <Insets right="10.0" />
@@ -213,10 +213,10 @@
                                           <Insets right="10.0" />
                                        </GridPane.margin>
                                     </Label>
-                                    <TextField fx:id="ant_work_ant2_text" promptText="150" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                                    <TextField fx:id="ant_work_ant3_text" promptText="314" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                                    <TextField fx:id="ant_work_ant4_text" promptText="30" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                                    <TextField fx:id="ant_wait_time_text" promptText="10000" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                                    <TextField fx:id="ant_work_ant2_text" promptText="150" text="150" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    <TextField fx:id="ant_work_ant3_text" promptText="314" text="314" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                    <TextField fx:id="ant_work_ant4_text" promptText="30" text="30" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                    <TextField fx:id="ant_wait_time_text" promptText="10000" text="10000" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                                  </children>
                               </GridPane>
                               <Button fx:id="ant_work_set_button" layoutX="114.0" layoutY="262.0" mnemonicParsing="false" text="设置" AnchorPane.bottomAnchor="48.0" AnchorPane.leftAnchor="114.0" />
@@ -244,30 +244,30 @@
                      <content>
                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
-                              <TextField fx:id="cyclic_param2_text" layoutX="214.0" layoutY="11.0" promptText="100" />
-                              <TextField fx:id="cyclic_param1_text" layoutX="214.0" layoutY="45.0" promptText="100" />
+                              <TextField fx:id="cyclic_param2_text" layoutX="214.0" layoutY="11.0" promptText="100" text="100" />
+                              <TextField fx:id="cyclic_param1_text" layoutX="214.0" layoutY="45.0" promptText="100" text="100" />
                               <Label layoutX="93.0" layoutY="50.0" text="间断时间设置响应" />
-                              <Button fx:id="cyclic_get_button" layoutX="337.0" layoutY="95.0" mnemonicParsing="false" text="获取" AnchorPane.bottomAnchor="-1.0" />
-                              <Button fx:id="cyclic_set_button" layoutX="93.0" layoutY="92.0" mnemonicParsing="false" text="设置" AnchorPane.bottomAnchor="2.0" />
+                              <Button fx:id="cyclic_get_button" layoutX="335.0" layoutY="91.0" mnemonicParsing="false" text="获取" AnchorPane.bottomAnchor="63.0" />
+                              <Button fx:id="cyclic_set_button" layoutX="67.0" layoutY="93.0" mnemonicParsing="false" text="设置" AnchorPane.bottomAnchor="61.0" />
                               <Label layoutX="67.0" layoutY="16.0" text="循环查询标签工作时间" />
                            </children>
                         </AnchorPane>
                      </content>
                   </TitledPane>
-                  <TitledPane fx:id="titled_pane_2" animated="false" text="模块通讯波特率/开机自动读取标志">
+                  <TitledPane fx:id="titled_pane_2" animated="false" expanded="false" text="模块通讯波特率/开机自动读取标志">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="288.0" prefWidth="348.0">
                            <children>
                               <Label layoutX="75.0" layoutY="25.0" text="模块通讯波特率" />
                               <ComboBox fx:id="baute_combox" layoutX="172.0" layoutY="20.0" prefWidth="150.0" />
-                              <Button fx:id="baute_set_button" layoutX="330.0" layoutY="20.0" mnemonicParsing="false" text="获取" />
+                              <Button fx:id="baute_set_button" layoutX="330.0" layoutY="20.0" mnemonicParsing="false" text="设置" />
                               <CheckBox fx:id="auto_read_checkbox" layoutX="75.0" layoutY="78.0" mnemonicParsing="false" text="是否开机自动读取" />
                               <Button fx:id="auto_read_set_button" layoutX="330.0" layoutY="74.0" mnemonicParsing="false" text="设置" />
                            </children>
                         </AnchorPane>
                     </content>
                   </TitledPane>
-                <TitledPane animated="false" text="TAGFOCUS 参数">
+                <TitledPane animated="false" expanded="false" text="TAGFOCUS 参数">
                   <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -278,11 +278,10 @@
                         </AnchorPane>
                   </content>
                 </TitledPane>
-                <TitledPane animated="false" text="蜂鸣器">
+                <TitledPane animated="false" expanded="false" text="报警间隔时间">
                   <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
-                              <CheckBox fx:id="beep_enabled_checkbox" layoutX="113.0" layoutY="21.0" mnemonicParsing="false" prefHeight="18.0" prefWidth="147.0" text="是否开启蜂鸣器" />
                               <TextField fx:id="beep_time_text" layoutX="200.0" layoutY="52.0" prefHeight="27.0" prefWidth="61.0" text="3" />
                               <Label layoutX="111.0" layoutY="57.0" text="报警间隔时间" />
                               <Label layoutX="270.0" layoutY="57.0" text="s" />
@@ -291,7 +290,7 @@
                         </AnchorPane>
                   </content>
                 </TitledPane>
-                <TitledPane animated="false" text="工作模式">
+                <TitledPane animated="false" expanded="false" text="工作模式">
                   <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -303,7 +302,7 @@
                         </AnchorPane>
                   </content>
                 </TitledPane>
-                  <TitledPane animated="false" text="EAS 参数">
+                  <TitledPane animated="false" expanded="false" text="EAS 参数">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -311,13 +310,13 @@
                               <Label layoutX="117.0" layoutY="60.0" text="EAS 值" />
                               <TextField fx:id="eas_bit_text" layoutX="170.0" layoutY="14.0" prefHeight="27.0" prefWidth="101.0" text="1" />
                               <TextField fx:id="eas_value_text" layoutX="170.0" layoutY="55.0" prefHeight="27.0" prefWidth="100.0" text="2" />
-                              <Button fx:id="eas_set_button" layoutX="288.0" layoutY="56.0" mnemonicParsing="false" text="设置" AnchorPane.bottomAnchor="38.0" />
+                              <Button fx:id="eas_set_button" layoutX="288.0" layoutY="64.0" mnemonicParsing="false" text="设置" AnchorPane.bottomAnchor="90.0" />
                               <Button fx:id="eas_get_button" layoutX="288.0" layoutY="14.0" mnemonicParsing="false" text="获取" />
                            </children>
                         </AnchorPane>
                     </content>
                   </TitledPane>
-                  <TitledPane animated="false" text="重置读写器 WIFI 模块">
+                  <TitledPane animated="false" expanded="false" text="重置读写器 WIFI 模块">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -326,7 +325,7 @@
                         </AnchorPane>
                     </content>
                   </TitledPane>
-                  <TitledPane animated="false" text="分支器间隔时间">
+                  <TitledPane animated="false" expanded="false" text="分支器间隔时间">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -338,7 +337,7 @@
                         </AnchorPane>
                     </content>
                   </TitledPane>
-                  <TitledPane animated="false" text="通道模式继电器工作时间">
+                  <TitledPane animated="false" expanded="false" text="通道模式继电器工作时间">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -351,7 +350,7 @@
                         </AnchorPane>
                     </content>
                   </TitledPane>
-                  <TitledPane animated="false" text="读写器触发工作时间">
+                  <TitledPane animated="false" expanded="false" text="读写器触发工作时间">
                      <content>
                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -363,7 +362,7 @@
                         </AnchorPane>
                      </content>
                   </TitledPane>
-                  <TitledPane animated="false" text="模块重新上电">
+                  <TitledPane animated="false" expanded="false" text="模块重新上电">
                      <content>
                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -372,7 +371,7 @@
                         </AnchorPane>
                      </content>
                   </TitledPane>
-                  <TitledPane animated="false" text="设备序列号">
+                  <TitledPane animated="false" expanded="false" text="设备序列号">
                      <content>
                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
@@ -383,20 +382,20 @@
                         </AnchorPane>
                      </content>
                   </TitledPane>
-                  <TitledPane animated="false" text="频率区域">
+                  <TitledPane animated="false" expanded="false" text="频率区域">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
                               <CheckBox fx:id="region_save_checkbox" layoutX="126.0" layoutY="76.0" mnemonicParsing="false" text="是否保存设置" />
                               <ComboBox fx:id="region_combox" layoutX="126.0" layoutY="27.0" prefWidth="150.0" />
                               <Label layoutX="70.0" layoutY="32.0" text="区域" />
-                              <Button fx:id="region_set_button" layoutX="295.0" layoutY="81.0" mnemonicParsing="false" text="设置" AnchorPane.bottomAnchor="13.0" />
-                              <Button layoutX="295.0" layoutY="36.0" mnemonicParsing="false" text="获取" AnchorPane.bottomAnchor="58.0" />
+                              <Button fx:id="region_set_button" layoutX="295.0" layoutY="81.0" mnemonicParsing="false" text="设置" AnchorPane.bottomAnchor="73.0" />
+                              <Button fx:id="region_get_button" layoutX="295.0" layoutY="38.0" mnemonicParsing="false" text="获取" AnchorPane.bottomAnchor="116.0" />
                            </children>
                         </AnchorPane>
                     </content>
                   </TitledPane>
-                  <TitledPane animated="false" text="心跳包参数">
+                  <TitledPane animated="false" expanded="false" text="心跳包参数">
                     <content>
                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>

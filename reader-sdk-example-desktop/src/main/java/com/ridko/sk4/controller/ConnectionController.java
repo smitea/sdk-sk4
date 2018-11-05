@@ -2,6 +2,7 @@ package com.ridko.sk4.controller;
 
 import com.ridko.sk4.*;
 import com.ridko.sk4.common.Dialogs;
+import com.ridko.sk4.common.SerialTools;
 import com.ridko.sk4.common.ThreadExcutorUntils;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -77,11 +78,15 @@ public class ConnectionController extends AbstactMessageCallback {
 
   public void initialize() {
     // 查找系统串口路径
-    List<String> ports = SerialParam.findPort();
-    // 绑定串口名称
-    connection_com_name.getItems().addAll(ports);
-    // 默认选中第一个
-    connection_com_name.getSelectionModel().selectFirst();
+    try {
+      List<String> ports = SerialTools.findPort();
+      // 绑定串口名称
+      connection_com_name.getItems().addAll(ports);
+      // 默认选中第一个
+      connection_com_name.getSelectionModel().selectFirst();
+    }catch (Exception e){
+      e.printStackTrace();
+    }
 
     // 添加波特率
     connection_com_baudrate.getItems().add(9600);
@@ -192,6 +197,7 @@ public class ConnectionController extends AbstactMessageCallback {
             this.isDisConnection.setValue(false);
             connectionCallback.callback();
           } catch (Exception e) {
+            e.printStackTrace();
             notify("串口连接超时", "red");
             this.isDisConnection.setValue(false);
           }

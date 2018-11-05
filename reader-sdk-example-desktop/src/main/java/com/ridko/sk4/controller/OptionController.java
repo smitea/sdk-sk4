@@ -50,6 +50,7 @@ public class OptionController extends AbstactMessageCallback {
 
     public void initialize() {
         initCombox();
+        initAction();
     }
 
     public void setCommand(ICommand command) {

@@ -15,7 +15,12 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.compilerVersion>1.8</maven.compiler.compilerVersion>
+        <!-- 系统版本变量 -->
         <package.environment>win-x64</package.environment>
+        <!--<package.environment>win-x86</package.environment>-->
+        <!--<package.environment>mac-os</package.environment>-->
+        <!--<package.environment>linux-x86_64</package.environment>-->
+        <!--<package.environment>linux-i386</package.environment>-->
     </properties>
     <dependencies>
         <dependency>
@@ -27,8 +32,6 @@
             <groupId>org.rxtx</groupId>
             <artifactId>rxtx</artifactId>
             <version>2.1.7</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/lib/RXTXcomm.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -61,6 +64,7 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
+                    <outputDirectory>${basedir}/install/${package.environment}/</outputDirectory>
                     <archive>
                         <manifest>
                             <mainClass>com.ridko.sk4.SK4Application</mainClass>
@@ -109,21 +113,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <outputDirectory>
-                        ${basedir}/install/${package.environment}/
-                    </outputDirectory>
-                    <excludes>
-                        <exclude>**/*.so</exclude>
-                        <exclude>**/*.dll</exclude>
-                        <exclude>**/*.jnilib</exclude>
-                        <exclude>**/*.jar</exclude>
-                    </excludes>
-                </configuration>
             </plugin>
         </plugins>
     </build>

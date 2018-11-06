@@ -69,14 +69,6 @@ public class ConnectionController extends AbstactMessageCallback {
   public AtomicReference<IReaderConnection> connectionAtomicReference = new AtomicReference<>();
 
   public void setConnectionCallback(IConnectionCallback connectionCallback) {
-    this.connectionCallback = connectionCallback;
-  }
-
-  public void setAddListenterCallback(Callback<IReaderConnection, Void> addListenterCallback) {
-    this.addListenterCallback = addListenterCallback;
-  }
-
-  public void initialize() {
     // 查找系统串口路径
     try {
       List<String> ports = SerialTools.findPort();
@@ -88,6 +80,14 @@ public class ConnectionController extends AbstactMessageCallback {
       e.printStackTrace();
     }
 
+    this.connectionCallback = connectionCallback;
+  }
+
+  public void setAddListenterCallback(Callback<IReaderConnection, Void> addListenterCallback) {
+    this.addListenterCallback = addListenterCallback;
+  }
+
+  public void initialize() {
     // 添加波特率
     connection_com_baudrate.getItems().add(9600);
     connection_com_baudrate.getItems().add(19200);

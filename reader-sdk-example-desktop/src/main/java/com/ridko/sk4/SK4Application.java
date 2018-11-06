@@ -9,6 +9,7 @@ import com.ridko.sk4.controller.SettingController;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.StringUtils;
 
 import java.net.URL;
 
@@ -43,7 +44,7 @@ public class SK4Application extends Application {
       System.loadLibrary("rxtxParallel");
       System.loadLibrary("rxtxSerial");
 
-      // 加载资源文件
+              // 加载资源文件
       mainUI = ViewLoads.load(MAIN_PATH);
       connectionUI = ViewLoads.load(CONNECTION_PATH);
       optionUI = ViewLoads.load(OPTION_PATH);

@@ -23,6 +23,7 @@
 
 ### Other ####
 *.gz
+/reader-sdk-example-desktop/install/
 
 ### NetBeans ###
 /nbproject/private/

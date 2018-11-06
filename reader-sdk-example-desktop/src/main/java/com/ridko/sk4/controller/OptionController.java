@@ -193,9 +193,6 @@ public class OptionController extends AbstactMessageCallback {
             FMB fmb = tag_filter_type_combox.getValue();
 
             BankNo bankNo = tag_bank_no_combox.getValue();
-            String startAdr = tag_start_adr_text.getText();
-            String dataLen = tag_data_length_text.getText();
-            String data = tag_write_data_text.getText();
 
             boolean isPMM = qt_control_enabled_checkbox.isSelected();
             boolean isControl = qt_public_memory_map_checkbox.isSelected();
@@ -305,7 +302,6 @@ public class OptionController extends AbstactMessageCallback {
             String password = fliter_tag_password_text.getText();
             String filterData = filter_data_text.getText();
             FMB fmb = tag_filter_type_combox.getValue();
-            LockType value = lock_type_combox.getValue();
 
             command.killTag(password,fmb,HexTools.hexStr2Byte(filterData)).then(new Callback<TagData>() {
                 @Override

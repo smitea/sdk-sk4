@@ -1,7 +1,6 @@
 package com.ridko.sk4.controller;
 
 import com.ridko.sk4.ICommand;
-import com.ridko.sk4.IFutureConnection;
 import com.ridko.sk4.IMessageCallback;
 import com.ridko.sk4.IReaderConnection;
 import com.ridko.sk4.common.ThreadExcutorUntils;
@@ -21,17 +20,11 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
@@ -47,8 +40,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -102,7 +93,7 @@ public class MainController implements IMessageCallback {
      */
     public Button tagdata_button;
     /**
-     * 清楚列表按钮
+     * 清除列表按钮
      */
     public Button clear_button;
 
@@ -143,6 +134,9 @@ public class MainController implements IMessageCallback {
      * 时间列
      */
     public TableColumn<TagMapper, String> time_column;
+    /**
+     * 场强值列
+     */
     public TableColumn<TagMapper, Double> rssi_column;
 
     /**
@@ -747,7 +741,6 @@ public class MainController implements IMessageCallback {
             }
         };
         tag_count_label.textProperty().bindBidirectional(tagNum, stringConverter);
-//        tag_rate_label.textProperty().bindBidirectional(tagCount, stringConverter);
         tag_time_label.textProperty().bindBidirectional(tagTime, stringConverter);
     }
 

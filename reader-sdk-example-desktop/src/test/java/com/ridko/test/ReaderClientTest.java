@@ -6,10 +6,6 @@ import com.ridko.sk4.ReaderConnectionBuild;
 import com.ridko.sk4.SerialParam;
 import com.ridko.sk4.common.HexTools;
 import com.ridko.sk4.entity.*;
-import com.ridko.sk4.listenter.ConnectEvent;
-import com.ridko.sk4.listenter.ErrorEvent;
-import com.ridko.sk4.listenter.IListenter;
-import com.ridko.sk4.listenter.ITagListenter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,16 +71,8 @@ public class ReaderClientTest {
 
   /** 设置事件监听器 */
   private void addListeners(IReaderConnection futureConnection) {
-    futureConnection.setConnectEventIListenter(new IListenter<ConnectEvent>() {
-      public void notify(ConnectEvent event) {
-        System.out.println(event.getMsg());
-      }
-    });
-    futureConnection.setErrorEventIListenter(new IListenter<ErrorEvent>() {
-      public void notify(ErrorEvent errorEvent) {
-        System.out.println(errorEvent.getMsg());
-      }
-    });
+    futureConnection.setConnectEventIListenter(event -> System.out.println(event.getMsg()));
+    futureConnection.setErrorEventIListenter(errorEvent -> System.out.println(errorEvent.getMsg()));
   }
 
   /** 测试结束时操作 */
@@ -100,12 +88,10 @@ public class ReaderClientTest {
   @Test
   public void start() throws InterruptedException {
     // 设置循环查询标签回调
-    futureConnection.setTagListenter(new ITagListenter() {
-      public void notify(Tag tag) {
-        assert tag != null;
-        // 打印标签信息
-        System.out.println(String.format("ANT:%d EPC:%s PC:%d RSSI:%f", tag.getAnt(), tag.getEpc(), tag.getPc(), tag.getRssi()));
-      }
+    futureConnection.setTagListenter(tag -> {
+      assert tag != null;
+      // 打印标签信息
+      System.out.println(String.format("ANT:%d EPC:%s PC:%d RSSI:%f", tag.getAnt(), tag.getEpc(), tag.getPc(), tag.getRssi()));
     });
     // 开始循环查询标签
     futureConnection.start();
@@ -121,22 +107,17 @@ public class ReaderClientTest {
     final AtomicInteger atomicInteger = new AtomicInteger(0);
 
     // 每秒计算一次速度
-    scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-      @Override
-      public void run() {
-        System.out.println(String.format("rate: %d /s ", atomicInteger.get()));
-        // 重置
-        atomicInteger.getAndSet(0);
-      }
+    scheduledExecutorService.scheduleAtFixedRate(() -> {
+      System.out.println(String.format("rate: %d /s ", atomicInteger.get()));
+      // 重置
+      atomicInteger.getAndSet(0);
     }, 1, 1, TimeUnit.SECONDS);
 
     // 设置循环查询标签回调
-    futureConnection.setTagListenter(new ITagListenter() {
-      public void notify(Tag tag) {
-        assert tag != null;
-        // 计数器+1
-        atomicInteger.addAndGet(1);
-      }
+    futureConnection.setTagListenter(tag -> {
+      assert tag != null;
+      // 计数器+1
+      atomicInteger.addAndGet(1);
     });
     // 开始循环查询标签
     futureConnection.start();

@@ -137,35 +137,11 @@ futureConnection.start();
 futureConnection.stop().await(2, TimeUnit.SECONDS);
 ```
 
-### 设置命令
+### 设置接口
 
 #### 参数设置
  任何设置的接口在设置失败时都会由 ``Promise`` 抛出 ``GetException`` 异常信息，当然获取的接口在获取失败时也会由 ``Promise`` 抛出 ``SetException`` 异常信息。
-
- 1. 功率设置/读取
+  
+### 接口调用说明
+ 接口调用请参考 [测试用例](reader-sdk-example-desktop/src/test/java/com/ridko/test/ReaderClientTest.java), Java doc 接口文档
  
- ```java
- // 设置读功率为30,写功率为28
- readerClient.setTxPower(30, 28, true).then(new Callback<Boolean>() {
-   public void onSuccess(Boolean value) {
-      System.out.println("功率设置成功");
-   }
-
-   public void onFailure(Throwable value) {
-      value.fillInStackTrace();
-      System.out.println("功率设置失败");
-   }
- });
-
- // 获取功率
- readerClient.getTxPower().then(new Callback<TxPower>() {
-   public void onSuccess(TxPower value) {
-      System.out.println(String.format("功率获取成功:读功率-%d 写功率-%d ", value.getReadPower(),  value.getWritePower(), value.isLoop() ? "开环" : "闭环"));
-   } 
-   public void onFailure(Throwable value) {
-      value.fillInStackTrace();
-      System.out.println("功率获取失败");
-   }
- });
-    
- ```

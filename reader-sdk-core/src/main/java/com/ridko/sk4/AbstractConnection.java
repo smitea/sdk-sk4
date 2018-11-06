@@ -193,36 +193,10 @@ abstract class AbstractConnection<Option extends SocketAddress> implements IRead
               }
             });
 
-            final AtomicInteger atomicInteger = new AtomicInteger(0);
             // 设置连接状态监听
             readerClientHandler.setListenter(new IListenter<ConnectEvent>() {
               @Override
               public void notify(ConnectEvent event) {
-//                if (isConnected && event == ConnectEvent.DISCONNECTION) {
-//                  while (atomicInteger.get() < retryCount) {
-//                    try {
-//                      // 通知重连事件
-//                      if(connectEventIListenter!=null){
-//                        connectEventIListenter.notify(ConnectEvent.RETRY_CONNECTION);
-//                      }
-//
-//                      // 设置连接状态
-//                      isConnected = false;
-//                      // 关闭线程
-//                      eventLoopGroup.shutdownGracefully();
-//                      bootstrap = null;
-//                      eventLoopGroup = null;
-//                      writeChannel = null;
-//                      connect(option).await(timeout, TimeUnit.MILLISECONDS);
-//                      // 恢复默认值
-//                      atomicInteger.getAndSet(0);
-//                      break;
-//                    } catch (Exception ignored) {
-//                      // 发生异常则重连次数-1
-//                      atomicInteger.addAndGet(1);
-//                    }
-//                  }
-//                }
                 if (connectEventIListenter != null) {
                   connectEventIListenter.notify(event);
                 }

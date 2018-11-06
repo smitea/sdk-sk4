@@ -32,7 +32,6 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.0.1</version>
                 <configuration>
-                    <stylesheetfile>${project.basedir}/main.css</stylesheetfile>
                     <reportOutputDirectory>${project.basedir}</reportOutputDirectory>
                     <destDir>doc</destDir>
                 </configuration>
